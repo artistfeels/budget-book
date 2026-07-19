@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { listAvailableMonths, summarizeByMonth } from '../lib/aggregations'
 import { useTransactionStore } from '../store/useTransactionStore'
 import KpiCards from '../components/dashboard/KpiCards'
+import MonthlyTrendChart from '../components/dashboard/MonthlyTrendChart'
 
 type Period = 'all' | '6m' | '12m'
 
@@ -70,6 +71,10 @@ export default function DashboardPage() {
         compact={compact}
         onToggleCompact={() => setCompact((c) => !c)}
       />
+
+      <div className="mt-6">
+        <MonthlyTrendChart summaries={summariesInPeriod} />
+      </div>
     </div>
   )
 }
