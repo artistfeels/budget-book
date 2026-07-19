@@ -32,6 +32,16 @@ describe('classifyFlowType', () => {
     expect(classifyFlowType(input, [])).toBe('saving')
   })
 
+  it('classifies a positive-amount (inflow) transaction on a saving-account payment method as income, not saving', () => {
+    const input = base({
+      type: '수입',
+      category: '환급',
+      paymentMethod: '주택청약종합저축',
+      amount: 500000,
+    })
+    expect(classifyFlowType(input, [])).toBe('income')
+  })
+
   it('classifies an outgoing 이체>투자 as saving', () => {
     const input = base({ type: '이체', category: '투자', paymentMethod: 'MY 입출금통장', amount: -3000000 })
     expect(classifyFlowType(input, [])).toBe('saving')

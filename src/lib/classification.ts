@@ -28,7 +28,7 @@ export function classifyFlowType(input: ClassificationInput, rules: Classificati
     return matchedRule.flowType
   }
 
-  if (SAVING_PAYMENT_METHODS.includes(input.paymentMethod)) {
+  if (SAVING_PAYMENT_METHODS.includes(input.paymentMethod) && input.amount < 0) {
     return 'saving'
   }
 
