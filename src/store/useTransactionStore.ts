@@ -145,7 +145,19 @@ export const useTransactionStore = create<TransactionStoreState>((set, get) => (
       }))
     )
 
-    const newOnes = withIds.filter(({ id }) => !existingIds.has(id))
+    // Dedupe intra-batch collisions first: two rows in the SAME incoming batch can hash to the
+    // same id (e.g. genuinely identical rows in the source Excel file). If both survived into
+    // newTransactions, a single upsert() call would try to affect the same conflict-key row
+    // twice, which Postgres/PostgREST rejects — failing the ENTIRE batch, not just the collision.
+    // Keep the first occurrence of each id and drop the rest before filtering against existingIds.
+    const seenIds = new Set<string>()
+    const dedupedWithIds = withIds.filter(({ id }) => {
+      if (seenIds.has(id)) return false
+      seenIds.add(id)
+      return true
+    })
+
+    const newOnes = dedupedWithIds.filter(({ id }) => !existingIds.has(id))
     const duplicates = withIds.length - newOnes.length
 
     const newTransactions: Transaction[] = newOnes.map(({ row, id }) => ({
