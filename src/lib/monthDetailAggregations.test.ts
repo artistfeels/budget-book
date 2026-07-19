@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { dailySummaries, weeklySpendingBands } from './monthDetailAggregations'
+import { dailySummaries, spendingPaceSeries, weeklySpendingBands } from './monthDetailAggregations'
 import type { Transaction } from '../types/transaction'
 
 function tx(overrides: Partial<Transaction>): Transaction {
@@ -67,5 +67,39 @@ describe('weeklySpendingBands', () => {
     expect(bands).toHaveLength(5)
     expect(bands[0]).toEqual({ weekIndex: 0, startDate: '2026-07-01', endDate: '2026-07-05', total: 0, isPartial: true })
     expect(bands[4]).toEqual({ weekIndex: 4, startDate: '2026-07-27', endDate: '2026-07-31', total: 0, isPartial: true })
+  })
+})
+
+describe('spendingPaceSeries', () => {
+  it('accumulates this-month spending up to asOfDay and projects the remainder at the current daily rate', () => {
+    const txs = [
+      tx({ date: '2026-06-01', amount: -10000 }),
+      tx({ date: '2026-06-02', amount: -10000 }),
+    ]
+    const result = spendingPaceSeries(txs, '2026-06', 2)
+    expect(result.asOfDay).toBe(2)
+    expect(result.points[0].thisMonth).toBe(10000)
+    expect(result.points[1].thisMonth).toBe(20000)
+    expect(result.points[1].thisMonthProjected).toBe(20000)
+    // daily rate = 20000/2 = 10000/day; 30-day month -> projected total 300000
+    expect(result.points[29].thisMonthProjected).toBe(300000)
+    expect(result.points[2].thisMonth).toBeNull()
+    expect(result.projectedMonthEndTotal).toBe(300000)
+  })
+
+  it('computes percent vs last month at the same day-of-month', () => {
+    const txs = [
+      tx({ date: '2026-06-01', amount: -20000 }),
+      tx({ date: '2026-05-01', amount: -10000 }),
+    ]
+    const result = spendingPaceSeries(txs, '2026-06', 1)
+    expect(result.points[0].lastMonth).toBe(10000)
+    expect(result.percentVsLastMonthSameDay).toBeCloseTo(1) // (20000-10000)/10000
+  })
+
+  it('returns null percentVsLastMonthSameDay when last month has no data at that day', () => {
+    const txs = [tx({ date: '2026-06-01', amount: -20000 })]
+    const result = spendingPaceSeries(txs, '2026-06', 1)
+    expect(result.percentVsLastMonthSameDay).toBeNull()
   })
 })
