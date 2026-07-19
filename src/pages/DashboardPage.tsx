@@ -3,6 +3,7 @@ import { listAvailableMonths, summarizeByMonth } from '../lib/aggregations'
 import { useTransactionStore } from '../store/useTransactionStore'
 import KpiCards from '../components/dashboard/KpiCards'
 import MonthlyTrendChart from '../components/dashboard/MonthlyTrendChart'
+import CategoryDonut from '../components/dashboard/CategoryDonut'
 
 type Period = 'all' | '6m' | '12m'
 
@@ -74,6 +75,10 @@ export default function DashboardPage() {
 
       <div className="mt-6">
         <MonthlyTrendChart summaries={summariesInPeriod} />
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <CategoryDonut transactions={transactions.filter((t) => selectedMonths.includes(t.date.slice(0, 7)))} />
       </div>
     </div>
   )

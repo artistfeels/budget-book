@@ -1,0 +1,83 @@
+import { useMemo, useState } from 'react'
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import { categoryBreakdown, subcategoryBreakdown, type AmountBreakdownItem } from '../../lib/dashboardAggregations'
+import { formatKRW } from '../../lib/format'
+import type { Transaction } from '../../types/transaction'
+
+const COLORS = ['#2563eb', '#e11d48', '#059669', '#d97706', '#7c3aed', '#0891b2', '#db2777', '#65a30d', '#475569', '#ea580c']
+
+interface CategoryDonutProps {
+  transactions: Transaction[]
+}
+
+export default function CategoryDonut({ transactions }: CategoryDonutProps) {
+  const [drilldown, setDrilldown] = useState<string | null>(null)
+  const [includeSaving, setIncludeSaving] = useState(false)
+
+  const items: AmountBreakdownItem[] = useMemo(
+    () =>
+      drilldown
+        ? subcategoryBreakdown(transactions, drilldown, includeSaving)
+        : categoryBreakdown(transactions, includeSaving),
+    [transactions, drilldown, includeSaving]
+  )
+
+  const total = items.reduce((sum, i) => sum + i.amount, 0)
+
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm">
+      <div className="mb-4 flex items-center justify-between">
+        <p className="font-medium text-slate-700">
+          지출 카테고리 구성 {drilldown && <span className="text-slate-400">/ {drilldown}</span>}
+        </p>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-1.5 text-xs text-slate-500">
+            <input type="checkbox" checked={includeSaving} onChange={(e) => setIncludeSaving(e.target.checked)} />
+            저축 포함
+          </label>
+          {drilldown && (
+            <button onClick={() => setDrilldown(null)} className="text-sm text-blue-600 hover:underline">
+              ← 대분류로 돌아가기
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-col gap-4 sm:flex-row">
+        <div className="sm:w-1/2">
+          <ResponsiveContainer width="100%" height={240}>
+            <PieChart>
+              <Pie
+                data={items}
+                dataKey="amount"
+                nameKey="label"
+                innerRadius={60}
+                outerRadius={100}
+                onClick={(entry) => {
+                  if (!drilldown) setDrilldown(entry.label)
+                }}
+              >
+                {items.map((item, i) => (
+                  <Cell key={item.label} fill={COLORS[i % COLORS.length]} cursor={drilldown ? 'default' : 'pointer'} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value: number) => formatKRW(value)} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="flex-1 space-y-2">
+          {items.map((item, i) => (
+            <div key={item.label} className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                {item.label}
+              </span>
+              <span className="text-slate-600">
+                {formatKRW(item.amount)} ({total > 0 ? ((item.amount / total) * 100).toFixed(1) : '0'}%)
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
