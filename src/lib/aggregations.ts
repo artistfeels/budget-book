@@ -46,3 +46,8 @@ export function listAvailableMonths(transactions: Transaction[]): string[] {
   const months = new Set(transactions.map((t) => t.date.slice(0, 7)))
   return [...months].sort()
 }
+
+export function monthOverMonthChange(current: number, previous: number): number | null {
+  if (previous === 0) return null
+  return (current - previous) / previous
+}

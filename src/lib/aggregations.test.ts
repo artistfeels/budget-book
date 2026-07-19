@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { listAvailableMonths, resolvedFlowType, summarizeByMonth } from './aggregations'
+import { listAvailableMonths, monthOverMonthChange, resolvedFlowType, summarizeByMonth } from './aggregations'
 import type { Transaction } from '../types/transaction'
 
 function tx(overrides: Partial<Transaction>): Transaction {
@@ -90,5 +90,19 @@ describe('listAvailableMonths', () => {
   it('returns the distinct sorted list of months present in the data', () => {
     const txs = [tx({ date: '2025-07-19' }), tx({ date: '2026-07-19' }), tx({ date: '2025-08-01' })]
     expect(listAvailableMonths(txs)).toEqual(['2025-07', '2025-08', '2026-07'])
+  })
+})
+
+describe('monthOverMonthChange', () => {
+  it('computes a positive percent increase', () => {
+    expect(monthOverMonthChange(120, 100)).toBeCloseTo(0.2)
+  })
+
+  it('computes a negative percent decrease', () => {
+    expect(monthOverMonthChange(80, 100)).toBeCloseTo(-0.2)
+  })
+
+  it('returns null when the previous value is zero (undefined percent change)', () => {
+    expect(monthOverMonthChange(50, 0)).toBeNull()
   })
 })
