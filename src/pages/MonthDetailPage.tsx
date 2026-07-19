@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import CalendarGrid from '../components/month/CalendarGrid'
+import DayTransactionPanel from '../components/month/DayTransactionPanel'
 import { useTransactionStore } from '../store/useTransactionStore'
 import { listAvailableMonths } from '../lib/aggregations'
 
@@ -15,6 +16,7 @@ export default function MonthDetailPage() {
   const navigate = useNavigate()
   const transactions = useTransactionStore((s) => s.transactions)
   const availableMonths = useMemo(() => listAvailableMonths(transactions), [transactions])
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
 
   const month = yyyyMm ?? availableMonths[availableMonths.length - 1] ?? new Date().toISOString().slice(0, 7)
 
@@ -36,7 +38,11 @@ export default function MonthDetailPage() {
         </button>
       </div>
 
-      <CalendarGrid transactions={transactions} month={month} onDayClick={() => {}} />
+      <CalendarGrid transactions={transactions} month={month} onDayClick={setSelectedDay} />
+
+      {selectedDay && (
+        <DayTransactionPanel date={selectedDay} transactions={transactions} onClose={() => setSelectedDay(null)} />
+      )}
     </div>
   )
 }
