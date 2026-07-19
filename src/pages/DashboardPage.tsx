@@ -5,6 +5,8 @@ import KpiCards from '../components/dashboard/KpiCards'
 import MonthlyTrendChart from '../components/dashboard/MonthlyTrendChart'
 import CategoryDonut from '../components/dashboard/CategoryDonut'
 import CategoryHeatmap from '../components/dashboard/CategoryHeatmap'
+import TopMerchants from '../components/dashboard/TopMerchants'
+import PaymentMethodPie from '../components/dashboard/PaymentMethodPie'
 
 type Period = 'all' | '6m' | '12m'
 
@@ -41,6 +43,11 @@ export default function DashboardPage() {
     const lastTwo = monthlySummaries.slice(-2)
     return lastTwo.length === 2 ? lastTwo[0] : undefined
   }, [monthlySummaries])
+
+  const periodTransactions = useMemo(
+    () => transactions.filter((t) => selectedMonths.includes(t.date.slice(0, 7))),
+    [transactions, selectedMonths]
+  )
 
   return (
     <div>
@@ -79,11 +86,16 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <CategoryDonut transactions={transactions.filter((t) => selectedMonths.includes(t.date.slice(0, 7)))} />
+        <CategoryDonut transactions={periodTransactions} />
+        <PaymentMethodPie transactions={periodTransactions} />
       </div>
 
       <div className="mt-6">
-        <CategoryHeatmap transactions={transactions.filter((t) => selectedMonths.includes(t.date.slice(0, 7)))} />
+        <CategoryHeatmap transactions={periodTransactions} />
+      </div>
+
+      <div className="mt-6">
+        <TopMerchants transactions={periodTransactions} />
       </div>
     </div>
   )
