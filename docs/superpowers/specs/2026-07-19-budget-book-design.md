@@ -141,8 +141,9 @@ export interface ClassificationRule {
 6. `타입 == 이체 && 대분류 == 카드대금` → `neutral` (3.5)
 7. `타입 == 이체` 이고 위에 해당 안 되며 페어 매칭된 내계좌이체(`isPairedTransfer`) → `neutral`
 8. `타입 == 이체` 이고 미매칭(`isUnmatchedTransfer`) → `neutral` (집계 제외, 단 UI에서 경고로 노출)
-9. `타입 == 수입` → `income`
-10. 그 외 `타입 == 지출` → `spending`
+9. 그 외 `타입 == 이체` 전부 (예: 대분류 `현금`, `이체`(미분류) 등 페어링 대상이 아닌 이체) → `neutral` — 이체는 어떤 대분류든 예외 없이 수입/지출 집계에서 제외
+10. `타입 == 수입` → `income`
+11. 그 외 `타입 == 지출` → `spending`
 
 KPI 재정의 (원본 스펙 유지):
 - 총수입 = `income` 합계, 소비지출 = `spending` 합계, 저축·투자 = `saving` 합계
