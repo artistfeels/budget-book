@@ -102,4 +102,12 @@ describe('spendingPaceSeries', () => {
     const result = spendingPaceSeries(txs, '2026-06', 1)
     expect(result.percentVsLastMonthSameDay).toBeNull()
   })
+
+  it('clamps points to the viewed month\'s actual day count even when a comparison month is longer', () => {
+    // 2026-06 has 30 days, but the previous month (2026-05) has 31 days.
+    const txs: Transaction[] = []
+    const result = spendingPaceSeries(txs, '2026-06', 1)
+    expect(result.points).toHaveLength(30)
+    expect(result.points[result.points.length - 1].day).toBe(30)
+  })
 })

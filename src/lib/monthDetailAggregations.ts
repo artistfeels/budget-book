@@ -128,6 +128,11 @@ export function spendingPaceSeries(transactions: Transaction[], month: string, a
     })
   }
 
+  // The accumulation loop above runs up to maxDay so lastMonth/threeMonthAvg cumulative
+  // sums stay correct even when a comparison month is longer than the viewed month, but
+  // the returned series should only cover the viewed month's actual days.
+  points.length = daysInMonth
+
   const atAsOf = points[Math.min(asOfDay, daysInMonth) - 1]?.thisMonth ?? 0
   const dailyRate = asOfDay > 0 ? atAsOf / asOfDay : 0
   for (let day = asOfDay; day <= daysInMonth; day++) {
