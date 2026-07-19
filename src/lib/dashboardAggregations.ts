@@ -51,3 +51,38 @@ export function topMerchants(transactions: Transaction[], limit = 10): AmountBre
 export function paymentMethodBreakdown(transactions: Transaction[]): AmountBreakdownItem[] {
   return bucketBySpending(transactions, (t) => t.paymentMethod)
 }
+
+export interface CategoryMonthHeatmap {
+  categories: string[]
+  months: string[]
+  amounts: Record<string, Record<string, number>>
+}
+
+export function categoryMonthHeatmap(transactions: Transaction[]): CategoryMonthHeatmap {
+  const amounts: Record<string, Record<string, number>> = {}
+  const monthsSet = new Set<string>()
+
+  for (const t of transactions) {
+    if (resolvedFlowType(t) !== 'spending') continue
+    const month = t.date.slice(0, 7)
+    monthsSet.add(month)
+    if (!amounts[t.category]) amounts[t.category] = {}
+    amounts[t.category][month] = (amounts[t.category][month] ?? 0) + t.amount
+  }
+
+  const totalByCategory = new Map<string, number>()
+  for (const category of Object.keys(amounts)) {
+    let total = 0
+    for (const month of Object.keys(amounts[category])) {
+      const positive = Math.max(0, -amounts[category][month])
+      amounts[category][month] = positive
+      total += positive
+    }
+    totalByCategory.set(category, total)
+  }
+
+  const categories = Object.keys(amounts).sort((a, b) => totalByCategory.get(b)! - totalByCategory.get(a)!)
+  const months = [...monthsSet].sort()
+
+  return { categories, months, amounts }
+}

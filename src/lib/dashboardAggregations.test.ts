@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { categoryBreakdown, paymentMethodBreakdown, subcategoryBreakdown, topMerchants } from './dashboardAggregations'
+import { categoryBreakdown, categoryMonthHeatmap, paymentMethodBreakdown, subcategoryBreakdown, topMerchants } from './dashboardAggregations'
 import type { Transaction } from '../types/transaction'
 
 function tx(overrides: Partial<Transaction>): Transaction {
@@ -102,5 +102,27 @@ describe('paymentMethodBreakdown', () => {
       { label: '네이버페이 머니', amount: 20000, count: 1 },
       { label: '삼성카드 taptap O', amount: 10000, count: 1 },
     ])
+  })
+})
+
+describe('categoryMonthHeatmap', () => {
+  it('builds a category x month spending matrix, categories sorted by total desc, months asc', () => {
+    const txs = [
+      tx({ date: '2026-07-05', category: '식비', amount: -10000 }),
+      tx({ date: '2026-06-05', category: '식비', amount: -5000 }),
+      tx({ date: '2026-07-10', category: '교통', amount: -30000 }),
+    ]
+    const result = categoryMonthHeatmap(txs)
+    expect(result.months).toEqual(['2026-06', '2026-07'])
+    expect(result.categories).toEqual(['교통', '식비'])
+    expect(result.amounts['교통']).toEqual({ '2026-07': 30000 })
+    expect(result.amounts['식비']).toEqual({ '2026-06': 5000, '2026-07': 10000 })
+  })
+
+  it('excludes non-spending flow types', () => {
+    const txs = [tx({ category: '내계좌이체', amount: -1000, flowType: 'neutral', type: '이체' })]
+    const result = categoryMonthHeatmap(txs)
+    expect(result.categories).toEqual([])
+    expect(result.months).toEqual([])
   })
 })
