@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { dailySummaries, spendingPaceSeries, weeklySpendingBands } from './monthDetailAggregations'
+import { dailySummaries, monthInfographics, spendingPaceSeries, weeklySpendingBands } from './monthDetailAggregations'
 import type { Transaction } from '../types/transaction'
 
 function tx(overrides: Partial<Transaction>): Transaction {
@@ -109,5 +109,30 @@ describe('spendingPaceSeries', () => {
     const result = spendingPaceSeries(txs, '2026-06', 1)
     expect(result.points).toHaveLength(30)
     expect(result.points[result.points.length - 1].day).toBe(30)
+  })
+})
+
+describe('monthInfographics', () => {
+  it('computes the biggest spend day, delivery/coffee totals, daily average, most frequent merchant, and no-spend days', () => {
+    const txs = [
+      tx({ date: '2026-06-01', amount: -50000, category: '식비', subcategory: '배달', content: '배달의민족' }),
+      tx({ date: '2026-06-01', amount: -5000, category: '카페/간식', subcategory: '커피/음료', content: '스타벅스' }),
+      tx({ date: '2026-06-02', amount: -3000, category: '카페/간식', subcategory: '커피/음료', content: '스타벅스' }),
+      tx({ date: '2026-06-03', amount: -3000, category: '카페/간식', subcategory: '커피/음료', content: '스타벅스' }),
+    ]
+    const result = monthInfographics(txs, '2026-06')
+    expect(result.biggestSpendDay).toEqual({ date: '2026-06-01', amount: 55000 })
+    expect(result.deliveryCount).toBe(1)
+    expect(result.deliveryTotal).toBe(50000)
+    expect(result.coffeeTotal).toBe(11000)
+    expect(result.mostFrequentMerchant).toEqual({ content: '스타벅스', count: 3 })
+    expect(result.noSpendDayCount).toBe(27) // 30 days in June, 3 days with spending
+  })
+
+  it('returns null biggestSpendDay/mostFrequentMerchant when there is no spending at all', () => {
+    const result = monthInfographics([], '2026-06')
+    expect(result.biggestSpendDay).toBeNull()
+    expect(result.mostFrequentMerchant).toBeNull()
+    expect(result.noSpendDayCount).toBe(30)
   })
 })

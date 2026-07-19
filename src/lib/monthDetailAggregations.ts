@@ -146,3 +146,45 @@ export function spendingPaceSeries(transactions: Transaction[], month: string, a
 
   return { points, asOfDay, projectedMonthEndTotal, percentVsLastMonthSameDay }
 }
+
+export interface MonthInfographics {
+  biggestSpendDay: { date: string; amount: number } | null
+  deliveryCount: number
+  deliveryTotal: number
+  coffeeTotal: number
+  dailyAverageSpending: number
+  mostFrequentMerchant: { content: string; count: number } | null
+  noSpendDayCount: number
+}
+
+export function monthInfographics(transactions: Transaction[], month: string): MonthInfographics {
+  const daily = dailySummaries(transactions, month)
+  const monthSpendingTx = transactions.filter((t) => t.date.slice(0, 7) === month && resolvedFlowType(t) === 'spending')
+
+  const biggestDay = [...daily].filter((d) => d.spending > 0).sort((a, b) => b.spending - a.spending)[0]
+  const totalSpending = daily.reduce((sum, d) => sum + d.spending, 0)
+  const noSpendDayCount = daily.filter((d) => d.spending === 0).length
+
+  const delivery = monthSpendingTx.filter((t) => t.subcategory === '배달')
+  const deliveryTotal = delivery.reduce((sum, t) => sum + Math.max(0, -t.amount), 0)
+
+  const coffeeTotal = monthSpendingTx
+    .filter((t) => t.subcategory === '커피/음료')
+    .reduce((sum, t) => sum + Math.max(0, -t.amount), 0)
+
+  const merchantCounts = new Map<string, number>()
+  for (const t of monthSpendingTx) {
+    merchantCounts.set(t.content, (merchantCounts.get(t.content) ?? 0) + 1)
+  }
+  const mostFrequentEntry = [...merchantCounts.entries()].sort((a, b) => b[1] - a[1])[0]
+
+  return {
+    biggestSpendDay: biggestDay ? { date: biggestDay.date, amount: biggestDay.spending } : null,
+    deliveryCount: delivery.length,
+    deliveryTotal,
+    coffeeTotal,
+    dailyAverageSpending: daily.length > 0 ? totalSpending / daily.length : 0,
+    mostFrequentMerchant: mostFrequentEntry ? { content: mostFrequentEntry[0], count: mostFrequentEntry[1] } : null,
+    noSpendDayCount,
+  }
+}
