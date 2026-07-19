@@ -1,11 +1,18 @@
+import { useEffect } from 'react'
 import AuthGuard from './auth/AuthGuard'
+import ImportPage from './pages/ImportPage'
+import { useTransactionStore } from './store/useTransactionStore'
 
 export default function App() {
+  const fetchAll = useTransactionStore((s) => s.fetchAll)
+
+  useEffect(() => {
+    fetchAll()
+  }, [fetchAll])
+
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-slate-50 p-8">
-        <h1 className="text-2xl font-bold text-slate-800">가계부</h1>
-      </div>
+      <ImportPage />
     </AuthGuard>
   )
 }
