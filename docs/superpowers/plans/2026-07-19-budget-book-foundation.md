@@ -596,7 +596,7 @@ describe('parseWorkbook', () => {
     expect(row.type).toBe('수입')
     expect(row.amount).toBe(37484)
     expect(row.paymentMethod).toBe('OK파킹플렉스통장')
-    expect(row.date).toBe('2026-07-04')
+    expect(row.date).toBe('2026-06-27') // serial 46200 = 21 days before the 46221 anchor used above (2026-07-18)
   })
 
   it('defaults missing 소분류 to 미분류 and empty 메모 to null', () => {
