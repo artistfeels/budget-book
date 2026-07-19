@@ -54,6 +54,15 @@ describe('summarizeByMonth', () => {
     expect(july.spending).toBe(18000)
   })
 
+  it('clamps spending to 0 when refunds exceed the original outflow in a month', () => {
+    const txs = [
+      tx({ date: '2026-07-10', amount: -10000, flowType: 'spending' }),
+      tx({ date: '2026-07-11', amount: 15000, flowType: 'spending' }), // over-refund
+    ]
+    const [july] = summarizeByMonth(txs)
+    expect(july.spending).toBe(0)
+  })
+
   it('excludes neutral transactions entirely', () => {
     const txs = [tx({ date: '2026-07-10', amount: -251310, flowType: 'neutral' })]
     const result = summarizeByMonth(txs)

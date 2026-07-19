@@ -7,7 +7,9 @@ export default function App() {
   const fetchAll = useTransactionStore((s) => s.fetchAll)
 
   useEffect(() => {
-    fetchAll()
+    fetchAll().catch((error) => {
+      console.error('Failed to fetch transactions:', error)
+    })
   }, [fetchAll])
 
   return (

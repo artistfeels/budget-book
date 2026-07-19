@@ -35,3 +35,15 @@ create table classification_rules (
 alter table classification_rules enable row level security;
 create policy "own rows" on classification_rules for all
   using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+create or replace function set_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger transactions_set_updated_at
+  before update on transactions
+  for each row execute function set_updated_at();

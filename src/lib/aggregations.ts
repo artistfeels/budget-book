@@ -32,8 +32,11 @@ export function summarizeByMonth(transactions: Transaction[]): MonthlySummary[] 
   return [...buckets.entries()]
     .map(([month, bucket]) => {
       const income = bucket.income
-      const spending = Math.abs(bucket.spending)
-      const saving = Math.abs(bucket.saving)
+      // Refunds net against spending/saving, but if they outweigh the original
+      // outflow the bucket sum goes positive — that's no longer "spending" in
+      // this month, so clamp at 0 instead of flipping it back to a fake positive figure.
+      const spending = Math.max(0, -bucket.spending)
+      const saving = Math.max(0, -bucket.saving)
       return { month, income, spending, saving, netCashFlow: income - spending - saving }
     })
     .sort((a, b) => a.month.localeCompare(b.month))
