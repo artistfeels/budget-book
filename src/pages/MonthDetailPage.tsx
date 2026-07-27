@@ -3,8 +3,11 @@ import { useNavigate, useParams } from 'react-router-dom'
 import CalendarGrid from '../components/month/CalendarGrid'
 import DayTransactionPanel from '../components/month/DayTransactionPanel'
 import SpendingPaceChart from '../components/month/SpendingPaceChart'
+import MonthSummaryCard from '../components/month/MonthSummaryCard'
+import MonthInfographics from '../components/month/MonthInfographics'
+import CategoryDonut from '../components/dashboard/CategoryDonut'
 import { useTransactionStore } from '../store/useTransactionStore'
-import { listAvailableMonths } from '../lib/aggregations'
+import { listAvailableMonths, summarizeByMonth } from '../lib/aggregations'
 
 function shiftMonth(month: string, delta: number): string {
   const [y, m] = month.split('-').map(Number)
@@ -20,6 +23,12 @@ export default function MonthDetailPage() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
 
   const month = yyyyMm ?? availableMonths[availableMonths.length - 1] ?? new Date().toISOString().slice(0, 7)
+
+  const summaries = useMemo(() => summarizeByMonth(transactions), [transactions])
+  const currentSummary = summaries.find((s) => s.month === month)
+  const previousSummary = summaries.find((s) => s.month === shiftMonth(month, -1))
+
+  const monthTransactions = useMemo(() => transactions.filter((t) => t.date.slice(0, 7) === month), [transactions, month])
 
   return (
     <div>
@@ -39,10 +48,22 @@ export default function MonthDetailPage() {
         </button>
       </div>
 
+      <div className="mb-6">
+        <MonthSummaryCard current={currentSummary} previous={previousSummary} />
+      </div>
+
       <CalendarGrid transactions={transactions} month={month} onDayClick={setSelectedDay} />
 
       <div className="mt-6">
         <SpendingPaceChart transactions={transactions} month={month} />
+      </div>
+
+      <div className="mt-6">
+        <CategoryDonut transactions={monthTransactions} />
+      </div>
+
+      <div className="mt-6">
+        <MonthInfographics transactions={transactions} month={month} />
       </div>
 
       {selectedDay && (
