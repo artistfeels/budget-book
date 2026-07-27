@@ -10,11 +10,13 @@ interface SpendingPaceChartProps {
 }
 
 export default function SpendingPaceChart({ transactions, month }: SpendingPaceChartProps) {
+  const [year, monthNum] = month.split('-').map(Number)
+  const daysInMonth = new Date(year, monthNum, 0).getDate()
   const isCurrentMonth = month === new Date().toISOString().slice(0, 7)
-  const asOfDay = isCurrentMonth ? new Date().getDate() : 31
+  const asOfDay = isCurrentMonth ? new Date().getDate() : daysInMonth
 
   const result = useMemo(() => spendingPaceSeries(transactions, month, asOfDay), [transactions, month, asOfDay])
-  const clampedAsOfDay = Math.min(asOfDay, result.points.length)
+  const clampedAsOfDay = result.asOfDay
 
   const isFaster = (result.percentVsLastMonthSameDay ?? 0) > 0
 

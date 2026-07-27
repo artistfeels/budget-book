@@ -110,6 +110,23 @@ describe('spendingPaceSeries', () => {
     expect(result.points).toHaveLength(30)
     expect(result.points[result.points.length - 1].day).toBe(30)
   })
+
+  it('clamps an out-of-range asOfDay (e.g. the 31 sentinel used for past months) to the month\'s day count', () => {
+    // 2026-06 has 30 days; SpendingPaceChart passes asOfDay=31 for any non-current month.
+    // Without clamping, the daily rate is diluted by dividing by 31 instead of 30, and the
+    // same-day lookup into the previous month (2026-05, 31 days) reads past the truncated
+    // 30-length points array, silently producing percentVsLastMonthSameDay = null.
+    const txs = [
+      tx({ date: '2026-06-01', amount: -6000 }),
+      tx({ date: '2026-06-02', amount: -6000 }),
+      tx({ date: '2026-05-01', amount: -3000 }),
+      tx({ date: '2026-05-02', amount: -3000 }),
+    ]
+    const result = spendingPaceSeries(txs, '2026-06', 31)
+    expect(result.asOfDay).toBe(30)
+    expect(result.percentVsLastMonthSameDay).toBeCloseTo(1) // (12000 - 6000) / 6000
+    expect(result.projectedMonthEndTotal).toBe(12000) // dailyRate = 12000/30, not diluted by /31
+  })
 })
 
 describe('monthInfographics', () => {

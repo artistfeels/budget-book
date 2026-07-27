@@ -94,6 +94,10 @@ function shiftMonth(month: string, delta: number): string {
 export function spendingPaceSeries(transactions: Transaction[], month: string, asOfDay: number): SpendingPaceResult {
   const daily = dailySummaries(transactions, month)
   const daysInMonth = daily.length
+  // Callers (e.g. SpendingPaceChart for past months) may pass a sentinel like 31 that
+  // exceeds the viewed month's actual day count. Clamp once here so every downstream
+  // calculation (daily rate, projection, same-day comparison) uses a valid day index.
+  const clampedAsOfDay = Math.min(asOfDay, daysInMonth)
 
   const prevDaily = dailySummaries(transactions, shiftMonth(month, -1))
   const avgMonthsDaily = [1, 2, 3].map((n) => dailySummaries(transactions, shiftMonth(month, -n)))
@@ -121,7 +125,7 @@ export function spendingPaceSeries(transactions: Transaction[], month: string, a
 
     points.push({
       day,
-      thisMonth: day <= asOfDay && day <= daysInMonth ? thisCum : null,
+      thisMonth: day <= clampedAsOfDay && day <= daysInMonth ? thisCum : null,
       thisMonthProjected: null,
       lastMonth: day <= prevDaily.length ? lastCum : null,
       threeMonthAvg: avgCount > 0 ? avgSum / avgCount : null,
@@ -133,18 +137,18 @@ export function spendingPaceSeries(transactions: Transaction[], month: string, a
   // the returned series should only cover the viewed month's actual days.
   points.length = daysInMonth
 
-  const atAsOf = points[Math.min(asOfDay, daysInMonth) - 1]?.thisMonth ?? 0
-  const dailyRate = asOfDay > 0 ? atAsOf / asOfDay : 0
-  for (let day = asOfDay; day <= daysInMonth; day++) {
+  const atAsOf = points[clampedAsOfDay - 1]?.thisMonth ?? 0
+  const dailyRate = clampedAsOfDay > 0 ? atAsOf / clampedAsOfDay : 0
+  for (let day = clampedAsOfDay; day <= daysInMonth; day++) {
     points[day - 1].thisMonthProjected = dailyRate * day
   }
   const projectedMonthEndTotal = dailyRate * daysInMonth
 
-  const lastMonthAtAsOf = asOfDay <= prevDaily.length ? points[asOfDay - 1]?.lastMonth ?? null : null
+  const lastMonthAtAsOf = clampedAsOfDay <= prevDaily.length ? points[clampedAsOfDay - 1]?.lastMonth ?? null : null
   const percentVsLastMonthSameDay =
     lastMonthAtAsOf !== null && lastMonthAtAsOf !== 0 ? (atAsOf - lastMonthAtAsOf) / lastMonthAtAsOf : null
 
-  return { points, asOfDay, projectedMonthEndTotal, percentVsLastMonthSameDay }
+  return { points, asOfDay: clampedAsOfDay, projectedMonthEndTotal, percentVsLastMonthSameDay }
 }
 
 export interface MonthInfographics {
