@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import CalendarGrid from '../components/month/CalendarGrid'
 import DayTransactionPanel from '../components/month/DayTransactionPanel'
+import SpendingPaceChart from '../components/month/SpendingPaceChart'
 import { useTransactionStore } from '../store/useTransactionStore'
 import { listAvailableMonths } from '../lib/aggregations'
 
@@ -39,6 +40,10 @@ export default function MonthDetailPage() {
       </div>
 
       <CalendarGrid transactions={transactions} month={month} onDayClick={setSelectedDay} />
+
+      <div className="mt-6">
+        <SpendingPaceChart transactions={transactions} month={month} />
+      </div>
 
       {selectedDay && (
         <DayTransactionPanel date={selectedDay} transactions={transactions} onClose={() => setSelectedDay(null)} />
