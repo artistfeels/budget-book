@@ -1,10 +1,18 @@
 import { formatKRW } from '../../lib/format'
+import { resolvedFlowType } from '../../lib/aggregations'
 import type { Transaction } from '../../types/transaction'
 
 interface DayTransactionPanelProps {
   date: string
   transactions: Transaction[]
   onClose: () => void
+}
+
+const AMOUNT_COLOR_BY_FLOW: Record<ReturnType<typeof resolvedFlowType>, string> = {
+  income: 'text-blue-600',
+  spending: 'text-rose-600',
+  saving: 'text-emerald-600',
+  neutral: 'text-slate-500',
 }
 
 export default function DayTransactionPanel({ date, transactions, onClose }: DayTransactionPanelProps) {
@@ -26,7 +34,7 @@ export default function DayTransactionPanel({ date, transactions, onClose }: Day
             <li key={t.id} className="rounded-lg border p-3 text-sm">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-slate-700">{t.content}</span>
-                <span className={t.amount < 0 ? 'text-rose-600' : 'text-blue-600'}>{formatKRW(t.amount)}</span>
+                <span className={AMOUNT_COLOR_BY_FLOW[resolvedFlowType(t)]}>{formatKRW(t.amount)}</span>
               </div>
               <div className="mt-1 text-xs text-slate-400">
                 {t.time.slice(0, 5)} · {t.category} / {t.subcategory} · {t.paymentMethod}
