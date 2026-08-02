@@ -9,6 +9,7 @@ import {
   defaultDateForMonth,
   filterByMonth,
   filterBySection,
+  filterExcluded,
   isPartialMonth,
   searchEntries,
   sortEntries,
@@ -22,7 +23,6 @@ import {
   SEED_EXPENSE_CATEGORIES,
   SEED_INCOME_CATEGORIES,
   SEED_PAYMENT_METHODS,
-  SEED_SAVING_CATEGORIES,
   mergeObservedCategories,
   mergeObservedFlatList,
   mergeObservedPaymentMethods,
@@ -38,13 +38,8 @@ function createDraft(section: EntrySection, month: string): Transaction {
     id: '__draft__',
     date: defaultDateForMonth(month, new Date()),
     time: '12:00:00',
-    type: section === 'income' ? '수입' : section === 'saving' ? '이체' : '지출',
-    category:
-      section === 'income'
-        ? SEED_INCOME_CATEGORIES[0]
-        : section === 'saving'
-          ? SEED_SAVING_CATEGORIES[0]
-          : Object.keys(SEED_EXPENSE_CATEGORIES)[0],
+    type: section === 'income' ? '수입' : '지출',
+    category: section === 'income' ? SEED_INCOME_CATEGORIES[0] : Object.keys(SEED_EXPENSE_CATEGORIES)[0],
     subcategory: '미분류',
     content: '',
     amount: 0,
@@ -52,7 +47,7 @@ function createDraft(section: EntrySection, month: string): Transaction {
     paymentMethod: SEED_PAYMENT_METHODS[0],
     memo: null,
     flowType: section,
-    flowTypeOverride: section === 'income' ? null : section,
+    flowTypeOverride: null,
     transferPairId: null,
     isPairedTransfer: false,
     isUnmatchedTransfer: false,
@@ -77,6 +72,7 @@ export default function EntriesPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [draft, setDraft] = useState<Transaction | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [showExcluded, setShowExcluded] = useState(false)
   // True while `month` holds the "no data at all yet" fallback (the current real month) rather than
   // a month derived from actual data — lets us re-sync once transactions finish loading.
   const [monthIsFallback, setMonthIsFallback] = useState(false)
@@ -116,10 +112,14 @@ export default function EntriesPage() {
   useEffect(() => {
     setSelectedIds(new Set())
     setDraft(null)
-  }, [section, month, categoryFilter, paymentMethodFilter, search])
+  }, [section, month, categoryFilter, paymentMethodFilter, search, showExcluded])
 
-  const sectionRows = useMemo(() => filterBySection(transactions, section), [transactions, section])
-  const monthRows = useMemo(() => filterByMonth(sectionRows, month), [sectionRows, month])
+  const excludedRows = useMemo(() => filterExcluded(transactions), [transactions])
+  const baseRows = useMemo(
+    () => (showExcluded ? excludedRows : filterBySection(transactions, section)),
+    [showExcluded, excludedRows, transactions, section]
+  )
+  const monthRows = useMemo(() => filterByMonth(baseRows, month), [baseRows, month])
   const categoryFiltered = useMemo(
     () => (categoryFilter === 'ALL' ? monthRows : monthRows.filter((t) => t.category === categoryFilter)),
     [monthRows, categoryFilter]
@@ -138,10 +138,17 @@ export default function EntriesPage() {
   )
   const totalAmount = useMemo(() => sortedRows.reduce((sum, t) => sum + t.amount, 0), [sortedRows])
 
-  const categoryFilterOptions = useMemo(() => [...new Set(sectionRows.map((t) => t.category))].sort(), [sectionRows])
+  const sectionRowsForFilters = useMemo(
+    () => (showExcluded ? excludedRows : filterBySection(transactions, section)),
+    [showExcluded, excludedRows, transactions, section]
+  )
+  const categoryFilterOptions = useMemo(
+    () => [...new Set(sectionRowsForFilters.map((t) => t.category))].sort(),
+    [sectionRowsForFilters]
+  )
   const paymentMethodFilterOptions = useMemo(
-    () => [...new Set(sectionRows.map((t) => t.paymentMethod))].sort(),
-    [sectionRows]
+    () => [...new Set(sectionRowsForFilters.map((t) => t.paymentMethod))].sort(),
+    [sectionRowsForFilters]
   )
 
   const paymentMethodOptions = useMemo(
@@ -151,11 +158,6 @@ export default function EntriesPage() {
   const incomeCategoryOptions = useMemo(
     () =>
       mergeObservedFlatList(SEED_INCOME_CATEGORIES, filterBySection(transactions, 'income').map((t) => t.category)),
-    [transactions]
-  )
-  const savingCategoryOptions = useMemo(
-    () =>
-      mergeObservedFlatList(SEED_SAVING_CATEGORIES, filterBySection(transactions, 'saving').map((t) => t.category)),
     [transactions]
   )
   const expenseCategories = useMemo(
@@ -177,15 +179,6 @@ export default function EntriesPage() {
         { key: 'amount', label: '금액', type: 'amount' },
       ]
     }
-    if (section === 'saving') {
-      return [
-        { key: 'date', label: '날짜', type: 'date' },
-        { key: 'paymentMethod', label: '계좌', type: 'select', options: paymentMethodOptions },
-        { key: 'category', label: '구분', type: 'select', options: savingCategoryOptions },
-        { key: 'content', label: '내용', type: 'text' },
-        { key: 'amount', label: '금액', type: 'amount' },
-      ]
-    }
     return [
       { key: 'date', label: '날짜', type: 'date' },
       { key: 'paymentMethod', label: '결제수단', type: 'select', options: paymentMethodOptions },
@@ -199,34 +192,9 @@ export default function EntriesPage() {
       { key: 'content', label: '지출내용', type: 'text' },
       { key: 'amount', label: '금액', type: 'amount' },
     ]
-  }, [section, paymentMethodOptions, incomeCategoryOptions, savingCategoryOptions, expenseCategories])
+  }, [section, paymentMethodOptions, incomeCategoryOptions, expenseCategories])
 
-  // Clearing an override is only safe when the row has a usable AUTOMATIC classification to fall back
-  // on. If `flowType` is 'neutral', clearing would resolve the row to neutral — it would vanish from
-  // all three tabs with no way to bring it back from this screen. For those rows an explicit choice is
-  // mandatory, so the button toggles straight between 'saving' and 'spending' and never offers null.
-  function canClearOverride(row: Transaction): boolean {
-    return row.flowType !== 'neutral'
-  }
-
-  const overrideAction =
-    section === 'spending'
-      ? {
-          label: (row: Transaction) =>
-            row.flowTypeOverride === 'spending' && canClearOverride(row) ? '자동 분류로' : '저축으로 전환',
-          onClick: (row: Transaction) =>
-            handleSetOverride(row.id, row.flowTypeOverride === 'spending' && canClearOverride(row) ? null : 'saving'),
-        }
-      : section === 'saving'
-        ? {
-            label: (row: Transaction) =>
-              row.flowTypeOverride === 'saving' && canClearOverride(row) ? '자동 분류로' : '지출로 전환',
-            onClick: (row: Transaction) =>
-              handleSetOverride(row.id, row.flowTypeOverride === 'saving' && canClearOverride(row) ? null : 'spending'),
-          }
-        : undefined
-
-  async function handleSetOverride(id: string, override: 'saving' | 'spending' | null) {
+  async function handleSetOverride(id: string, override: 'spending' | 'neutral' | null) {
     try {
       await setOverride(id, override)
       setError(null)
@@ -234,6 +202,18 @@ export default function EntriesPage() {
       setError(`분류 변경에 실패했습니다: ${errorText(err)}`)
     }
   }
+
+  // Normal view: offer "이체로 제외" on every row (both tabs) — the user manually flags a
+  // mistakenly-typed internal transfer. Excluded view: offer "복구" instead, clearing the override.
+  const overrideAction = showExcluded
+    ? {
+        label: () => '복구',
+        onClick: (row: Transaction) => handleSetOverride(row.id, null),
+      }
+    : {
+        label: () => '이체로 제외',
+        onClick: (row: Transaction) => handleSetOverride(row.id, 'neutral'),
+      }
 
   async function handleEditField(id: string, key: EntryColumnKey, value: string | number) {
     // Preserve the row's existing sign when editing an amount: a positive `spending` row is a refund,
@@ -362,6 +342,9 @@ export default function EntriesPage() {
         paymentMethodFilter={paymentMethodFilter}
         paymentMethodOptions={paymentMethodFilterOptions}
         onPaymentMethodFilterChange={setPaymentMethodFilter}
+        showExcluded={showExcluded}
+        excludedCount={excludedRows.length}
+        onToggleShowExcluded={() => setShowExcluded((v) => !v)}
       />
 
       <div className="mt-4">

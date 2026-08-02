@@ -2,8 +2,6 @@ export const SEED_INCOME_CATEGORIES = ['급여', '상여금', '금융수입', '�
 
 export const SEED_TRANSFER_CATEGORIES = ['내계좌이체', '카드대금', '투자', '현금', '이체', '미분류']
 
-export const SEED_SAVING_CATEGORIES = ['투자', '청약저축', '적금', '증권/투자', '기타']
-
 export const SEED_EXPENSE_CATEGORIES: Record<string, string[]> = {
   식비: ['한식', '일식', '중식', '양식', '아시아음식', '고기', '치킨', '패스트푸드', '배달', '식재료', '미분류'],
   '카페/간식': ['커피/음료', '베이커리', '디저트/떡', '도넛/핫도그', '아이스크림/빙수', '기타간식', '미분류'],

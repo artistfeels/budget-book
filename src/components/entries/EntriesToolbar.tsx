@@ -15,6 +15,9 @@ interface EntriesToolbarProps {
   paymentMethodFilter: string
   paymentMethodOptions: string[]
   onPaymentMethodFilterChange: (value: string) => void
+  showExcluded: boolean
+  excludedCount: number
+  onToggleShowExcluded: () => void
 }
 
 export default function EntriesToolbar({
@@ -32,6 +35,9 @@ export default function EntriesToolbar({
   paymentMethodFilter,
   paymentMethodOptions,
   onPaymentMethodFilterChange,
+  showExcluded,
+  excludedCount,
+  onToggleShowExcluded,
 }: EntriesToolbarProps) {
   return (
     <div className="rounded-xl bg-white p-4 shadow-sm">
@@ -102,6 +108,15 @@ export default function EntriesToolbar({
             </option>
           ))}
         </select>
+
+        <button
+          onClick={onToggleShowExcluded}
+          className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
+            showExcluded ? 'border-slate-400 bg-slate-100 text-slate-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50'
+          }`}
+        >
+          제외됨 ({excludedCount})
+        </button>
       </div>
     </div>
   )
