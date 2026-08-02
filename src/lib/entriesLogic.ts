@@ -1,13 +1,12 @@
 import type { Transaction } from '../types/transaction'
 import { resolvedFlowType } from './aggregations'
 
-export type EntrySection = 'income' | 'saving' | 'spending'
+export type EntrySection = 'income' | 'spending'
 
-export const ENTRY_SECTIONS: EntrySection[] = ['income', 'saving', 'spending']
+export const ENTRY_SECTIONS: EntrySection[] = ['income', 'spending']
 
 export const ENTRY_SECTION_LABELS: Record<EntrySection, string> = {
   income: '수입',
-  saving: '저축·투자',
   spending: '지출',
 }
 
@@ -15,6 +14,11 @@ export type EntryColumnKey = 'date' | 'content' | 'category' | 'subcategory' | '
 
 export function filterBySection(transactions: Transaction[], section: EntrySection): Transaction[] {
   return transactions.filter((t) => resolvedFlowType(t) === section)
+}
+
+/** Transactions the user has manually excluded as "내 계좌 간 이동인데 잘못 찍힌 거래" — not a real automatic-neutral transfer, a deliberate override. */
+export function filterExcluded(transactions: Transaction[]): Transaction[] {
+  return transactions.filter((t) => t.flowTypeOverride === 'neutral')
 }
 
 export function filterByMonth(transactions: Transaction[], month: string): Transaction[] {

@@ -4,6 +4,7 @@ import {
   defaultDateForMonth,
   filterByMonth,
   filterBySection,
+  filterExcluded,
   isPartialMonth,
   searchEntries,
   sortEntries,
@@ -39,16 +40,31 @@ describe('filterBySection', () => {
   })
 
   it('resolves overrides before matching the section', () => {
-    const txs = [tx({ id: 'a', flowType: 'spending', flowTypeOverride: 'saving' })]
-    expect(filterBySection(txs, 'saving').map((t) => t.id)).toEqual(['a'])
-    expect(filterBySection(txs, 'spending')).toEqual([])
+    const txs = [tx({ id: 'a', flowType: 'income', flowTypeOverride: 'spending' })]
+    expect(filterBySection(txs, 'spending').map((t) => t.id)).toEqual(['a'])
+    expect(filterBySection(txs, 'income')).toEqual([])
   })
 
   it('excludes neutral transactions from every section', () => {
     const txs = [tx({ id: 'a', flowType: 'neutral' })]
     expect(filterBySection(txs, 'income')).toEqual([])
-    expect(filterBySection(txs, 'saving')).toEqual([])
     expect(filterBySection(txs, 'spending')).toEqual([])
+  })
+})
+
+describe('filterExcluded', () => {
+  it('returns only transactions manually overridden to neutral', () => {
+    const txs = [
+      tx({ id: 'a', flowType: 'spending', flowTypeOverride: 'neutral' }),
+      tx({ id: 'b', flowType: 'spending', flowTypeOverride: null }),
+      tx({ id: 'c', flowType: 'neutral', flowTypeOverride: null }), // auto-neutral (e.g. a real paired transfer)
+    ]
+    expect(filterExcluded(txs).map((t) => t.id)).toEqual(['a'])
+  })
+
+  it('returns an empty array when nothing has been manually excluded', () => {
+    const txs = [tx({ id: 'a', flowType: 'spending' }), tx({ id: 'b', flowType: 'neutral' })]
+    expect(filterExcluded(txs)).toEqual([])
   })
 })
 
@@ -147,10 +163,6 @@ describe('applyEntryFieldPatch', () => {
     expect(applyEntryFieldPatch('spending', 'amount', 50000)).toEqual({ amount: -50000 })
   })
 
-  it('applies a negative amount for the saving section', () => {
-    expect(applyEntryFieldPatch('saving', 'amount', 50000)).toEqual({ amount: -50000 })
-  })
-
   it('preserves the positive sign of an existing refund row in the spending section', () => {
     expect(applyEntryFieldPatch('spending', 'amount', 30000, 12000)).toEqual({ amount: 30000 })
   })
@@ -166,7 +178,6 @@ describe('applyEntryFieldPatch', () => {
 
   it('falls back to the section default sign when currentAmount is 0 (fresh draft row)', () => {
     expect(applyEntryFieldPatch('spending', 'amount', 30000, 0)).toEqual({ amount: -30000 })
-    expect(applyEntryFieldPatch('saving', 'amount', 30000, 0)).toEqual({ amount: -30000 })
     expect(applyEntryFieldPatch('income', 'amount', 30000, 0)).toEqual({ amount: 30000 })
   })
 
