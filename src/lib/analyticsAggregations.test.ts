@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { weekdaySpending, hourBucketSpending, detectSubscriptions, categoryTrendRanking } from './analyticsAggregations'
+import { weekdaySpending, hourBucketSpending, detectSubscriptions, categoryTrendRanking, generateInsights, projectAnnualSaving, simulateSavings } from './analyticsAggregations'
 import type { Transaction } from '../types/transaction'
+import type { MonthlySummary } from './aggregations'
 
 function tx(overrides: Partial<Transaction>): Transaction {
   return {
@@ -201,5 +202,74 @@ describe('categoryTrendRanking', () => {
       tx({ date: '2026-06-10', category: '급여', amount: 3000000, flowType: 'income', type: '수입' }),
     ]
     expect(categoryTrendRanking(txs, '2026-07')).toEqual([])
+  })
+})
+
+function summary(overrides: Partial<MonthlySummary>): MonthlySummary {
+  return { month: '2026-07', income: 3000000, spending: 2000000, saving: 1000000, netCashFlow: 1000000, ...overrides }
+}
+
+describe('generateInsights', () => {
+  it('generates a category-increase insight when one exists', () => {
+    const txs = [
+      tx({ date: '2026-07-10', category: '식비', amount: -80000 }),
+      tx({ date: '2026-06-10', category: '식비', amount: -30000 }),
+    ]
+    const insights = generateInsights(txs, '2026-07', [])
+    expect(insights.some((i) => i.text.includes('식비') && i.text.includes('늘었어요'))).toBe(true)
+  })
+
+  it('generates a subscription-total insight only when subscriptions exist', () => {
+    const withSub = [
+      tx({ date: '2026-06-01', content: '넷플릭스', amount: -17000 }),
+      tx({ date: '2026-07-01', content: '넷플릭스', amount: -17000 }),
+    ]
+    expect(generateInsights(withSub, '2026-07', []).some((i) => i.text.includes('구독료'))).toBe(true)
+    expect(generateInsights([], '2026-07', []).some((i) => i.text.includes('구독료'))).toBe(false)
+  })
+
+  it('generates a late-night-spending insight only when there is late-night spending in the given month', () => {
+    const withLateNight = [tx({ date: '2026-07-10', time: '23:30:00', amount: -20000 })]
+    expect(generateInsights(withLateNight, '2026-07', []).some((i) => i.text.includes('심야'))).toBe(true)
+    const noLateNight = [tx({ date: '2026-07-10', time: '13:00:00', amount: -20000 })]
+    expect(generateInsights(noLateNight, '2026-07', []).some((i) => i.text.includes('심야'))).toBe(false)
+  })
+
+  it('generates a savings-change insight only when both this month and last month have a summary', () => {
+    const summaries = [summary({ month: '2026-06', saving: 500000 }), summary({ month: '2026-07', saving: 900000 })]
+    expect(generateInsights([], '2026-07', summaries).some((i) => i.text.includes('저축액'))).toBe(true)
+    expect(generateInsights([], '2026-07', [summary({ month: '2026-07' })]).some((i) => i.text.includes('저축액'))).toBe(
+      false
+    )
+  })
+
+  it('returns an empty array when no condition is met', () => {
+    expect(generateInsights([], '2026-07', [])).toEqual([])
+  })
+})
+
+describe('projectAnnualSaving', () => {
+  it('projects the trailing 3-month average saving times 12', () => {
+    const summaries = [summary({ month: '2026-05', saving: 300000 }), summary({ month: '2026-06', saving: 500000 }), summary({ month: '2026-07', saving: 700000 })]
+    expect(projectAnnualSaving(summaries)).toBe(6000000) // avg 500000 * 12
+  })
+
+  it('averages over fewer than 3 months when that is all that exists', () => {
+    expect(projectAnnualSaving([summary({ saving: 400000 })])).toBe(4800000)
+  })
+
+  it('returns 0 for no data', () => {
+    expect(projectAnnualSaving([])).toBe(0)
+  })
+})
+
+describe('simulateSavings', () => {
+  it('sums baseline * reduction * 12 across categories', () => {
+    const result = simulateSavings({ 식비: 100000, '카페/간식': 20000 }, { 식비: 0.2 })
+    expect(result).toBe(240000) // 100000 * 0.2 * 12; 카페/간식 has no entry in reductionByCategory -> 0
+  })
+
+  it('returns 0 when no reductions are set', () => {
+    expect(simulateSavings({ 식비: 100000 }, {})).toBe(0)
   })
 })

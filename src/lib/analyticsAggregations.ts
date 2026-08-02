@@ -1,5 +1,7 @@
 import type { Transaction } from '../types/transaction'
+import type { MonthlySummary } from './aggregations'
 import { resolvedFlowType } from './aggregations'
+import { formatKRW } from './format'
 
 const WEEKDAY_LABELS = ['월', '화', '수', '목', '금', '토', '일']
 
@@ -125,4 +127,72 @@ export function categoryTrendRanking(transactions: Transaction[], month: string)
     result.push({ category, currentAmount, baselineAmount, changeAmount: currentAmount - baselineAmount })
   }
   return result.sort((a, b) => b.changeAmount - a.changeAmount)
+}
+
+export interface Insight {
+  text: string
+}
+
+export function generateInsights(
+  transactions: Transaction[],
+  month: string,
+  monthlySummaries: MonthlySummary[]
+): Insight[] {
+  const insights: Insight[] = []
+
+  const trends = categoryTrendRanking(transactions, month)
+  const topIncrease = trends.find((t) => t.changeAmount > 0)
+  if (topIncrease) {
+    insights.push({
+      text: `${topIncrease.category} 지출이 최근 3개월 평균보다 ${formatKRW(topIncrease.changeAmount)} 늘었어요`,
+    })
+  }
+  const topDecrease = [...trends].reverse().find((t) => t.changeAmount < 0)
+  if (topDecrease) {
+    insights.push({
+      text: `${topDecrease.category} 지출이 최근 3개월 평균보다 ${formatKRW(-topDecrease.changeAmount)} 줄었어요`,
+    })
+  }
+
+  const subscriptions = detectSubscriptions(transactions)
+  if (subscriptions.length > 0) {
+    const total = subscriptions.reduce((sum, s) => sum + s.amount, 0)
+    insights.push({ text: `이번 달 구독료로 총 ${formatKRW(total)}이 나갔어요 (${subscriptions.length}건)` })
+  }
+
+  const monthTx = transactions.filter((t) => t.date.slice(0, 7) === month)
+  const lateNight = hourBucketSpending(monthTx).find((h) => h.bucket === '심야')
+  if (lateNight && lateNight.amount > 0) {
+    insights.push({ text: `심야(22시~24시) 지출이 ${formatKRW(lateNight.amount)}이에요` })
+  }
+
+  const currentSummary = monthlySummaries.find((s) => s.month === month)
+  const previousSummary = monthlySummaries.find((s) => s.month === shiftMonth(month, -1))
+  if (currentSummary && previousSummary) {
+    const diff = currentSummary.saving - previousSummary.saving
+    if (diff !== 0) {
+      insights.push({
+        text: `이번 달 저축액이 지난달보다 ${formatKRW(Math.abs(diff))} ${diff > 0 ? '늘었어요' : '줄었어요'}`,
+      })
+    }
+  }
+
+  return insights.slice(0, 5)
+}
+
+export function projectAnnualSaving(monthlySummaries: MonthlySummary[]): number {
+  const trailing = monthlySummaries.slice(-3)
+  if (trailing.length === 0) return 0
+  const avgMonthlySaving = trailing.reduce((sum, s) => sum + s.saving, 0) / trailing.length
+  return avgMonthlySaving * 12
+}
+
+export function simulateSavings(
+  categoryBaselines: Record<string, number>,
+  reductionByCategory: Record<string, number>
+): number {
+  return Object.entries(categoryBaselines).reduce((sum, [category, baseline]) => {
+    const reduction = reductionByCategory[category] ?? 0
+    return sum + baseline * reduction * 12
+  }, 0)
 }
