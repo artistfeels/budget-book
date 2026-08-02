@@ -26,7 +26,7 @@ function tx(overrides: Partial<Transaction>): Transaction {
 
 describe('resolvedFlowType', () => {
   it('uses the override when present', () => {
-    expect(resolvedFlowType(tx({ flowType: 'spending', flowTypeOverride: 'saving' }))).toBe('saving')
+    expect(resolvedFlowType(tx({ flowType: 'spending', flowTypeOverride: 'neutral' }))).toBe('neutral')
   })
 
   it('falls back to the computed flowType when no override', () => {
