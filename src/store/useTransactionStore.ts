@@ -94,6 +94,7 @@ interface TransactionStoreState {
   loading: boolean
   fetchAll: () => Promise<void>
   importRows: (rows: ParsedRawRow[]) => Promise<{ inserted: number; duplicates: number }>
+  addTransaction: (transaction: Transaction) => Promise<void>
   updateTransaction: (id: string, patch: Partial<Transaction>) => Promise<void>
   deleteTransaction: (id: string) => Promise<void>
   setOverride: (id: string, override: 'saving' | 'spending' | null) => Promise<void>
@@ -217,6 +218,12 @@ export const useTransactionStore = create<TransactionStoreState>((set, get) => (
 
     set({ transactions: finalized })
     return { inserted: newOnes.length, duplicates }
+  },
+
+  async addTransaction(transaction) {
+    const { error } = await supabase.from('transactions').insert(transactionToRow(transaction))
+    if (error) throw error
+    set({ transactions: [...get().transactions, transaction] })
   },
 
   async updateTransaction(id, patch) {

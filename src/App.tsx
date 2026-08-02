@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom'
 import AuthGuard from './auth/AuthGuard'
 import AppShell from './components/AppShell'
 import DashboardPage from './pages/DashboardPage'
+import EntriesPage from './pages/EntriesPage'
 import ImportPage from './pages/ImportPage'
 import MonthDetailPage from './pages/MonthDetailPage'
 import { useTransactionStore } from './store/useTransactionStore'
@@ -22,6 +23,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/month/:yyyyMm" element={<MonthDetailPage />} />
+          <Route path="/entries" element={<EntriesPage />} />
           <Route path="/import" element={<ImportPage />} />
         </Routes>
       </AppShell>
