@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useTransactionStore } from '../store/useTransactionStore'
-import { listAvailableMonths, summarizeByMonth } from '../lib/aggregations'
+import { listAvailableMonths, resolvedFlowType, summarizeByMonth } from '../lib/aggregations'
 import { generateInsights } from '../lib/analyticsAggregations'
 import InsightFeed from '../components/analytics/InsightFeed'
 import WeekdayChart from '../components/analytics/WeekdayChart'
@@ -16,7 +16,16 @@ export default function AnalyticsPage() {
   const [period, setPeriod] = useState<Period>('12m')
 
   const availableMonths = useMemo(() => listAvailableMonths(transactions), [transactions])
-  const latestMonth = availableMonths[availableMonths.length - 1]
+  const latestMonth = useMemo(() => {
+    for (let i = availableMonths.length - 1; i >= 0; i--) {
+      const month = availableMonths[i]
+      const hasSpending = transactions.some(
+        (t) => t.date.slice(0, 7) === month && resolvedFlowType(t) === 'spending'
+      )
+      if (hasSpending) return month
+    }
+    return availableMonths[availableMonths.length - 1]
+  }, [availableMonths, transactions])
   const monthlySummaries = useMemo(() => summarizeByMonth(transactions), [transactions])
 
   const selectedMonths = useMemo(() => {

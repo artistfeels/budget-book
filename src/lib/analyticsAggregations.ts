@@ -122,7 +122,7 @@ export function categoryTrendRanking(transactions: Transaction[], month: string)
     const perMonth = baselineByCategory.get(category)
     if (!perMonth || perMonth.size === 0) continue // no comparison data at all — skip, per design
     const signedSum = [...perMonth.values()].reduce((sum, v) => sum + v, 0)
-    const baselineAmount = Math.max(0, -signedSum / perMonth.size)
+    const baselineAmount = Math.round(Math.max(0, -signedSum / perMonth.size))
     const currentAmount = Math.max(0, -(currentByCategory.get(category) ?? 0))
     result.push({ category, currentAmount, baselineAmount, changeAmount: currentAmount - baselineAmount })
   }
@@ -163,7 +163,7 @@ export function generateInsights(
   const monthTx = transactions.filter((t) => t.date.slice(0, 7) === month)
   const lateNight = hourBucketSpending(monthTx).find((h) => h.bucket === '심야')
   if (lateNight && lateNight.amount > 0) {
-    insights.push({ text: `심야(22시~24시) 지출이 ${formatKRW(lateNight.amount)}이에요` })
+    insights.push({ text: `이번 달 심야(22시~24시) 지출이 ${formatKRW(lateNight.amount)}이에요` })
   }
 
   const currentSummary = monthlySummaries.find((s) => s.month === month)

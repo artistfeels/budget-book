@@ -17,7 +17,7 @@ export default function CategoryTrendRanking({ transactions, month }: CategoryTr
 
   return (
     <div className="rounded-xl bg-white p-6 shadow-sm">
-      <p className="mb-4 font-medium text-slate-700">카테고리 증감 랭킹 (직전 3개월 평균 대비)</p>
+      <p className="mb-4 font-medium text-slate-700">카테고리 증감 랭킹 ({month} 기준, 직전 3개월 평균 대비)</p>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
           <p className="mb-2 text-xs font-medium text-rose-600">증가</p>

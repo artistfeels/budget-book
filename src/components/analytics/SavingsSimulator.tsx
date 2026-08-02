@@ -30,7 +30,7 @@ export default function SavingsSimulator({ transactions, month, monthlySummaries
 
   return (
     <div className="rounded-xl bg-white p-6 shadow-sm">
-      <p className="mb-1 font-medium text-slate-700">저축 시뮬레이터</p>
+      <p className="mb-1 font-medium text-slate-700">저축 시뮬레이터 ({month} 기준)</p>
       <p className="mb-4 text-2xl font-bold text-emerald-600">
         {formatKRW(baseProjection + extraFromSimulation)}
         <span className="ml-2 text-sm font-normal text-slate-400">연간 예상 저축액</span>
