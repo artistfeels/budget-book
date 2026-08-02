@@ -196,3 +196,21 @@ export function simulateSavings(
     return sum + baseline * reduction * 12
   }, 0)
 }
+
+export function latestMonthWithSpending(transactions: Transaction[], availableMonths: string[]): string | undefined {
+  for (let i = availableMonths.length - 1; i >= 0; i--) {
+    const month = availableMonths[i]
+    const hasSpending = transactions.some(
+      (t) => t.date.slice(0, 7) === month && resolvedFlowType(t) === 'spending'
+    )
+    if (hasSpending) return month
+  }
+  return availableMonths[availableMonths.length - 1]
+}
+
+export function topSpendingCategories(trends: CategoryTrend[], limit: number): CategoryTrend[] {
+  return trends
+    .filter((t) => t.baselineAmount > 0)
+    .sort((a, b) => b.baselineAmount - a.baselineAmount)
+    .slice(0, limit)
+}

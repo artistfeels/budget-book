@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { weekdaySpending, hourBucketSpending, detectSubscriptions, categoryTrendRanking, generateInsights, projectAnnualSaving, simulateSavings } from './analyticsAggregations'
+import { weekdaySpending, hourBucketSpending, detectSubscriptions, categoryTrendRanking, generateInsights, projectAnnualSaving, simulateSavings, latestMonthWithSpending, topSpendingCategories } from './analyticsAggregations'
 import type { Transaction } from '../types/transaction'
 import type { MonthlySummary } from './aggregations'
 
@@ -271,5 +271,56 @@ describe('simulateSavings', () => {
 
   it('returns 0 when no reductions are set', () => {
     expect(simulateSavings({ 식비: 100000 }, {})).toBe(0)
+  })
+})
+
+describe('latestMonthWithSpending', () => {
+  it('returns the latest month that has a spending transaction', () => {
+    const txs = [
+      tx({ date: '2026-06-10', amount: -10000, flowType: 'spending' }),
+      tx({ date: '2026-07-10', amount: -20000, flowType: 'spending' }),
+    ]
+    expect(latestMonthWithSpending(txs, ['2026-06', '2026-07'])).toBe('2026-07')
+  })
+
+  it('falls back to an earlier month when the latest month has no spending', () => {
+    const txs = [
+      tx({ date: '2026-06-10', amount: -10000, flowType: 'spending' }),
+      tx({ date: '2026-07-10', amount: 3000000, flowType: 'income', type: '수입' }),
+    ]
+    expect(latestMonthWithSpending(txs, ['2026-06', '2026-07'])).toBe('2026-06')
+  })
+
+  it('falls back to the plain latest month when no month has any spending', () => {
+    const txs = [tx({ date: '2026-07-10', amount: 3000000, flowType: 'income', type: '수입' })]
+    expect(latestMonthWithSpending(txs, ['2026-07'])).toBe('2026-07')
+  })
+
+  it('returns undefined for an empty months list', () => {
+    expect(latestMonthWithSpending([], [])).toBeUndefined()
+  })
+})
+
+describe('topSpendingCategories', () => {
+  it('returns at most `limit` categories, sorted by baselineAmount descending', () => {
+    const trends = [
+      { category: 'A', currentAmount: 0, baselineAmount: 10000, changeAmount: 0 },
+      { category: 'B', currentAmount: 0, baselineAmount: 50000, changeAmount: 0 },
+      { category: 'C', currentAmount: 0, baselineAmount: 30000, changeAmount: 0 },
+    ]
+    expect(topSpendingCategories(trends, 2).map((t) => t.category)).toEqual(['B', 'C'])
+  })
+
+  it('excludes categories with a zero baseline', () => {
+    const trends = [
+      { category: 'A', currentAmount: 0, baselineAmount: 0, changeAmount: 0 },
+      { category: 'B', currentAmount: 0, baselineAmount: 10000, changeAmount: 0 },
+    ]
+    expect(topSpendingCategories(trends, 8).map((t) => t.category)).toEqual(['B'])
+  })
+
+  it('returns all qualifying categories when fewer than the limit exist', () => {
+    const trends = [{ category: 'A', currentAmount: 0, baselineAmount: 10000, changeAmount: 0 }]
+    expect(topSpendingCategories(trends, 8)).toHaveLength(1)
   })
 })
