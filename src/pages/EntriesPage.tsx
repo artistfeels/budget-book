@@ -105,7 +105,7 @@ export default function EntriesPage() {
   useEffect(() => {
     setCategoryFilter('ALL')
     setPaymentMethodFilter('ALL')
-  }, [section])
+  }, [section, showExcluded])
 
   // Any change to what is on screen clears the selection and the open draft, so bulk actions can
   // never target rows the user can no longer see.
@@ -119,7 +119,10 @@ export default function EntriesPage() {
     () => (showExcluded ? excludedRows : filterBySection(transactions, section)),
     [showExcluded, excludedRows, transactions, section]
   )
-  const monthRows = useMemo(() => filterByMonth(baseRows, month), [baseRows, month])
+  const monthRows = useMemo(
+    () => (showExcluded ? baseRows : filterByMonth(baseRows, month)),
+    [showExcluded, baseRows, month]
+  )
   const categoryFiltered = useMemo(
     () => (categoryFilter === 'ALL' ? monthRows : monthRows.filter((t) => t.category === categoryFilter)),
     [monthRows, categoryFilter]
