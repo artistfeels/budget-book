@@ -151,6 +151,35 @@ describe('applyEntryFieldPatch', () => {
     expect(applyEntryFieldPatch('saving', 'amount', 50000)).toEqual({ amount: -50000 })
   })
 
+  it('preserves the positive sign of an existing refund row in the spending section', () => {
+    expect(applyEntryFieldPatch('spending', 'amount', 30000, 12000)).toEqual({ amount: 30000 })
+  })
+
+  it('keeps an existing negative spending amount negative', () => {
+    expect(applyEntryFieldPatch('spending', 'amount', 30000, -12000)).toEqual({ amount: -30000 })
+  })
+
+  it('preserves the sign even when the typed value carries the opposite sign', () => {
+    expect(applyEntryFieldPatch('spending', 'amount', -30000, 12000)).toEqual({ amount: 30000 })
+    expect(applyEntryFieldPatch('income', 'amount', -30000, -12000)).toEqual({ amount: -30000 })
+  })
+
+  it('falls back to the section default sign when currentAmount is 0 (fresh draft row)', () => {
+    expect(applyEntryFieldPatch('spending', 'amount', 30000, 0)).toEqual({ amount: -30000 })
+    expect(applyEntryFieldPatch('saving', 'amount', 30000, 0)).toEqual({ amount: -30000 })
+    expect(applyEntryFieldPatch('income', 'amount', 30000, 0)).toEqual({ amount: 30000 })
+  })
+
+  it('falls back to the section default sign when currentAmount is omitted or undefined', () => {
+    expect(applyEntryFieldPatch('spending', 'amount', 30000)).toEqual({ amount: -30000 })
+    expect(applyEntryFieldPatch('spending', 'amount', 30000, undefined)).toEqual({ amount: -30000 })
+    expect(applyEntryFieldPatch('income', 'amount', 30000, undefined)).toEqual({ amount: 30000 })
+  })
+
+  it('ignores currentAmount for non-amount fields', () => {
+    expect(applyEntryFieldPatch('spending', 'content', '환불', 12000)).toEqual({ content: '환불' })
+  })
+
   it('resets subcategory to 미분류 when the spending category changes', () => {
     expect(applyEntryFieldPatch('spending', 'category', '생활')).toEqual({ category: '생활', subcategory: '미분류' })
   })

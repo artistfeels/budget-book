@@ -40,8 +40,13 @@ export function isPartialMonth(allTransactions: Transaction[], month: string): b
   return false
 }
 
+/** `YYYY-MM` key for a Date — the month-key convention used across the app. */
+export function currentMonthKey(today: Date): string {
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+}
+
 export function defaultDateForMonth(month: string, today: Date): string {
-  const todayMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+  const todayMonth = currentMonthKey(today)
   if (month === todayMonth) {
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
   }
@@ -71,10 +76,20 @@ export function sortEntries(transactions: Transaction[], field: SortField, direc
 export function applyEntryFieldPatch(
   section: EntrySection,
   key: EntryColumnKey,
-  value: string | number
+  value: string | number,
+  /**
+   * Current signed amount of the row being edited, when one exists. `spending` rows may legitimately
+   * carry a POSITIVE amount (refunds net against spending — see aggregations.ts#summarizeByMonth), so
+   * editing the magnitude of an existing row must preserve whatever sign it already has. Omit it (or
+   * pass 0) for a brand-new draft row, which has no prior sign and falls back to the section default.
+   */
+  currentAmount?: number
 ): Partial<Transaction> {
   if (key === 'amount') {
     const magnitude = Math.abs(Number(value))
+    if (currentAmount !== undefined && currentAmount !== 0) {
+      return { amount: currentAmount < 0 ? -magnitude : magnitude }
+    }
     return { amount: section === 'income' ? magnitude : -magnitude }
   }
   if (key === 'category') {

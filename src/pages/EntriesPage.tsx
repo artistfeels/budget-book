@@ -5,6 +5,7 @@ import { useTransactionStore } from '../store/useTransactionStore'
 import { listAvailableMonths } from '../lib/aggregations'
 import {
   applyEntryFieldPatch,
+  currentMonthKey,
   defaultDateForMonth,
   filterByMonth,
   filterBySection,
@@ -27,6 +28,10 @@ import {
   mergeObservedPaymentMethods,
 } from '../lib/categories'
 import type { Transaction } from '../types/transaction'
+
+function errorText(err: unknown): string {
+  return err instanceof Error ? err.message : String(err)
+}
 
 function createDraft(section: EntrySection, month: string): Transaction {
   return {
@@ -71,19 +76,45 @@ export default function EntriesPage() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [draft, setDraft] = useState<Transaction | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  // True while `month` holds the "no data at all yet" fallback (the current real month) rather than
+  // a month derived from actual data — lets us re-sync once transactions finish loading.
+  const [monthIsFallback, setMonthIsFallback] = useState(false)
 
   useEffect(() => {
-    if (!month && availableMonths.length > 0) {
-      setMonth(availableMonths[availableMonths.length - 1])
+    if (availableMonths.length === 0) {
+      // Empty database: fall back to the current real month so a brand-new user still gets a
+      // toolbar, an empty table and a working "+ 추가" button instead of a dead-end message.
+      if (!month) {
+        setMonth(currentMonthKey(new Date()))
+        setMonthIsFallback(true)
+      }
+      return
     }
-  }, [availableMonths, month])
+    if (!month || monthIsFallback) {
+      setMonth(availableMonths[availableMonths.length - 1])
+      setMonthIsFallback(false)
+    }
+  }, [availableMonths, month, monthIsFallback])
 
+  // The month dropdown must always contain the selected month, including the empty-database fallback.
+  const monthOptions = useMemo(
+    () => (!month || availableMonths.includes(month) ? availableMonths : [...availableMonths, month].sort()),
+    [availableMonths, month]
+  )
+
+  // Section switches also reset the filter dropdowns, whose option lists are section-specific.
   useEffect(() => {
     setCategoryFilter('ALL')
     setPaymentMethodFilter('ALL')
+  }, [section])
+
+  // Any change to what is on screen clears the selection and the open draft, so bulk actions can
+  // never target rows the user can no longer see.
+  useEffect(() => {
     setSelectedIds(new Set())
     setDraft(null)
-  }, [section])
+  }, [section, month, categoryFilter, paymentMethodFilter, search])
 
   const sectionRows = useMemo(() => filterBySection(transactions, section), [transactions, section])
   const monthRows = useMemo(() => filterByMonth(sectionRows, month), [sectionRows, month])
@@ -168,21 +199,50 @@ export default function EntriesPage() {
     ]
   }, [section, paymentMethodOptions, incomeCategoryOptions, savingCategoryOptions, expenseCategories])
 
+  // Clearing an override is only safe when the row has a usable AUTOMATIC classification to fall back
+  // on. If `flowType` is 'neutral', clearing would resolve the row to neutral — it would vanish from
+  // all three tabs with no way to bring it back from this screen. For those rows an explicit choice is
+  // mandatory, so the button toggles straight between 'saving' and 'spending' and never offers null.
+  function canClearOverride(row: Transaction): boolean {
+    return row.flowType !== 'neutral'
+  }
+
   const overrideAction =
     section === 'spending'
       ? {
-          label: (row: Transaction) => (row.flowTypeOverride === 'spending' ? '자동 분류로' : '저축으로 전환'),
-          onClick: (row: Transaction) => setOverride(row.id, row.flowTypeOverride === 'spending' ? null : 'saving'),
+          label: (row: Transaction) =>
+            row.flowTypeOverride === 'spending' && canClearOverride(row) ? '자동 분류로' : '저축으로 전환',
+          onClick: (row: Transaction) =>
+            handleSetOverride(row.id, row.flowTypeOverride === 'spending' && canClearOverride(row) ? null : 'saving'),
         }
       : section === 'saving'
         ? {
-            label: (row: Transaction) => (row.flowTypeOverride === 'saving' ? '자동 분류로' : '지출로 전환'),
-            onClick: (row: Transaction) => setOverride(row.id, row.flowTypeOverride === 'saving' ? null : 'spending'),
+            label: (row: Transaction) =>
+              row.flowTypeOverride === 'saving' && canClearOverride(row) ? '자동 분류로' : '지출로 전환',
+            onClick: (row: Transaction) =>
+              handleSetOverride(row.id, row.flowTypeOverride === 'saving' && canClearOverride(row) ? null : 'spending'),
           }
         : undefined
 
-  function handleEditField(id: string, key: EntryColumnKey, value: string | number) {
-    updateTransaction(id, applyEntryFieldPatch(section, key, value))
+  async function handleSetOverride(id: string, override: 'saving' | 'spending' | null) {
+    try {
+      await setOverride(id, override)
+      setError(null)
+    } catch (err) {
+      setError(`분류 변경에 실패했습니다: ${errorText(err)}`)
+    }
+  }
+
+  async function handleEditField(id: string, key: EntryColumnKey, value: string | number) {
+    // Preserve the row's existing sign when editing an amount: a positive `spending` row is a refund,
+    // and forcing the section's default sign would silently turn it into a charge.
+    const currentAmount = key === 'amount' ? transactions.find((t) => t.id === id)?.amount : undefined
+    try {
+      await updateTransaction(id, applyEntryFieldPatch(section, key, value, currentAmount))
+      setError(null)
+    } catch (err) {
+      setError(`저장에 실패했습니다: ${errorText(err)}`)
+    }
   }
 
   function handleDraftChange(key: EntryColumnKey, value: string | number) {
@@ -202,8 +262,13 @@ export default function EntriesPage() {
       amount: draft.amount,
       paymentMethod: draft.paymentMethod,
     })
-    await addTransaction({ ...draft, id })
-    setDraft(null)
+    try {
+      await addTransaction({ ...draft, id })
+      setDraft(null)
+      setError(null)
+    } catch (err) {
+      setError(`저장에 실패했습니다: ${errorText(err)}`)
+    }
   }
 
   function toggleSelect(id: string) {
@@ -220,8 +285,34 @@ export default function EntriesPage() {
   }
 
   async function handleBulkDelete() {
-    await Promise.all([...selectedIds].map((id) => deleteTransaction(id)))
+    // Belt-and-suspenders: only ever delete rows that are actually on screen right now, even if some
+    // future filter path forgets to clear the selection.
+    const visibleIds = new Set(sortedRows.map((t) => t.id))
+    const ids = [...selectedIds].filter((id) => visibleIds.has(id))
+    if (ids.length === 0) {
+      setSelectedIds(new Set())
+      return
+    }
+    if (!window.confirm(`선택한 ${ids.length}건을 삭제하시겠습니까?`)) return
+
+    const results = await Promise.allSettled(ids.map((id) => deleteTransaction(id)))
     setSelectedIds(new Set())
+    const failed = results.filter((r) => r.status === 'rejected').length
+    if (failed > 0) {
+      setError(`삭제에 실패했습니다: ${ids.length}건 중 ${ids.length - failed}건 삭제, ${failed}건 실패했습니다.`)
+    } else {
+      setError(null)
+    }
+  }
+
+  async function handleDeleteRow(id: string) {
+    if (!window.confirm('이 항목을 삭제하시겠습니까?')) return
+    try {
+      await deleteTransaction(id)
+      setError(null)
+    } catch (err) {
+      setError(`삭제에 실패했습니다: ${errorText(err)}`)
+    }
   }
 
   function handleSortChange(field: SortField) {
@@ -245,11 +336,20 @@ export default function EntriesPage() {
     <div>
       <h1 className="mb-6 text-2xl font-bold text-slate-800">거래 입력/관리</h1>
 
+      {error && (
+        <div className="mb-4 flex items-start justify-between gap-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="shrink-0 font-medium hover:underline">
+            닫기
+          </button>
+        </div>
+      )}
+
       <EntriesToolbar
         section={section}
         onSectionChange={setSection}
         month={month}
-        availableMonths={availableMonths}
+        availableMonths={monthOptions}
         isPartial={isPartialMonth(transactions, month)}
         onMonthChange={setMonth}
         search={search}
@@ -270,7 +370,7 @@ export default function EntriesPage() {
           onToggleSelect={toggleSelect}
           onToggleSelectAll={toggleSelectAll}
           onBulkDelete={handleBulkDelete}
-          onDeleteRow={deleteTransaction}
+          onDeleteRow={handleDeleteRow}
           onEditField={handleEditField}
           sortField={sortField}
           sortDirection={sortDirection}

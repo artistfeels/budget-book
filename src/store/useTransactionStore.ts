@@ -226,13 +226,21 @@ export const useTransactionStore = create<TransactionStoreState>((set, get) => (
     set({ transactions: [...get().transactions, transaction] })
   },
 
+  // Optimistic: local state is updated BEFORE the network round-trip. Inline cells in the entries
+  // screen are fully controlled inputs bound to store state, so waiting for Supabase would make
+  // React revert the DOM to the stale value between keystrokes. On failure we restore the row's
+  // previous value and re-throw so the caller can surface the error.
   async updateTransaction(id, patch) {
     const current = get().transactions.find((t) => t.id === id)
     if (!current) return
     const updated = { ...current, ...patch }
-    const { error } = await supabase.from('transactions').update(transactionToRow(updated)).eq('id', id)
-    if (error) throw error
     set({ transactions: get().transactions.map((t) => (t.id === id ? updated : t)) })
+    const { error } = await supabase.from('transactions').update(transactionToRow(updated)).eq('id', id)
+    if (error) {
+      // Roll back this row only (not the whole array) so unrelated concurrent edits survive.
+      set({ transactions: get().transactions.map((t) => (t.id === id ? current : t)) })
+      throw error
+    }
   },
 
   async deleteTransaction(id) {
