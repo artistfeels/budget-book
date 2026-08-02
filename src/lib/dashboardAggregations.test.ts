@@ -46,20 +46,8 @@ describe('categoryBreakdown', () => {
   })
 
   it('respects a manual flowTypeOverride when bucketing', () => {
-    const txs = [tx({ category: '식비', amount: -10000, flowType: 'spending', flowTypeOverride: 'saving' })]
+    const txs = [tx({ category: '식비', amount: -10000, flowType: 'spending', flowTypeOverride: 'neutral' })]
     expect(categoryBreakdown(txs)).toEqual([])
-  })
-
-  it('includes saving-flow transactions only when includeSaving is true', () => {
-    const txs = [
-      tx({ category: '금융', amount: -20000, flowType: 'saving', subcategory: '증권/투자' }),
-      tx({ category: '식비', amount: -10000, flowType: 'spending' }),
-    ]
-    expect(categoryBreakdown(txs)).toEqual([{ label: '식비', amount: 10000, count: 1 }])
-    expect(categoryBreakdown(txs, true)).toEqual([
-      { label: '금융', amount: 20000, count: 1 },
-      { label: '식비', amount: 10000, count: 1 },
-    ])
   })
 })
 

@@ -35,14 +35,13 @@ describe('resolvedFlowType', () => {
 })
 
 describe('summarizeByMonth', () => {
-  it('sums income, spending, and saving separately per month', () => {
+  it('computes saving as the residual of income minus spending for the month', () => {
     const txs = [
       tx({ date: '2026-07-05', amount: 3000000, flowType: 'income' }),
       tx({ date: '2026-07-10', amount: -50000, flowType: 'spending' }),
-      tx({ date: '2026-07-15', amount: -200000, flowType: 'saving' }),
     ]
     const [july] = summarizeByMonth(txs)
-    expect(july).toEqual({ month: '2026-07', income: 3000000, spending: 50000, saving: 200000, netCashFlow: 2750000 })
+    expect(july).toEqual({ month: '2026-07', income: 3000000, spending: 50000, saving: 2950000, netCashFlow: 2950000 })
   })
 
   it('nets refund rows against spending in the same category (positive-amount spending row)', () => {
@@ -79,10 +78,19 @@ describe('summarizeByMonth', () => {
   })
 
   it('respects a manual override when computing the bucket', () => {
-    const txs = [tx({ date: '2026-07-10', amount: -50000, flowType: 'spending', flowTypeOverride: 'saving' })]
+    const txs = [tx({ date: '2026-07-10', amount: -50000, flowType: 'spending', flowTypeOverride: 'neutral' })]
     const [july] = summarizeByMonth(txs)
-    expect(july.spending).toBe(0)
-    expect(july.saving).toBe(50000)
+    expect(july).toBeUndefined()
+  })
+
+  it('clamps saving to 0 in an overspend month, while netCashFlow stays negative', () => {
+    const txs = [
+      tx({ date: '2026-07-05', amount: 1000000, flowType: 'income' }),
+      tx({ date: '2026-07-10', amount: -1500000, flowType: 'spending' }),
+    ]
+    const [july] = summarizeByMonth(txs)
+    expect(july.saving).toBe(0)
+    expect(july.netCashFlow).toBe(-500000)
   })
 })
 

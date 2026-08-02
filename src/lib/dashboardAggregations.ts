@@ -7,15 +7,10 @@ export interface AmountBreakdownItem {
   count: number
 }
 
-function bucketBySpending(
-  transactions: Transaction[],
-  keyFn: (t: Transaction) => string,
-  includeSaving = false
-): AmountBreakdownItem[] {
+function bucketBySpending(transactions: Transaction[], keyFn: (t: Transaction) => string): AmountBreakdownItem[] {
   const buckets = new Map<string, { amount: number; count: number }>()
   for (const t of transactions) {
-    const flow = resolvedFlowType(t)
-    if (flow !== 'spending' && !(includeSaving && flow === 'saving')) continue
+    if (resolvedFlowType(t) !== 'spending') continue
     const key = keyFn(t)
     const bucket = buckets.get(key) ?? { amount: 0, count: 0 }
     bucket.amount += t.amount
@@ -28,19 +23,14 @@ function bucketBySpending(
     .sort((a, b) => b.amount - a.amount)
 }
 
-export function categoryBreakdown(transactions: Transaction[], includeSaving = false): AmountBreakdownItem[] {
-  return bucketBySpending(transactions, (t) => t.category, includeSaving)
+export function categoryBreakdown(transactions: Transaction[]): AmountBreakdownItem[] {
+  return bucketBySpending(transactions, (t) => t.category)
 }
 
-export function subcategoryBreakdown(
-  transactions: Transaction[],
-  category: string,
-  includeSaving = false
-): AmountBreakdownItem[] {
+export function subcategoryBreakdown(transactions: Transaction[], category: string): AmountBreakdownItem[] {
   return bucketBySpending(
     transactions.filter((t) => t.category === category),
-    (t) => t.subcategory,
-    includeSaving
+    (t) => t.subcategory
   )
 }
 
