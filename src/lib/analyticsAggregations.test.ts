@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { weekdaySpending, hourBucketSpending, detectSubscriptions } from './analyticsAggregations'
+import { weekdaySpending, hourBucketSpending, detectSubscriptions, categoryTrendRanking } from './analyticsAggregations'
 import type { Transaction } from '../types/transaction'
 
 function tx(overrides: Partial<Transaction>): Transaction {
@@ -156,5 +156,50 @@ describe('detectSubscriptions', () => {
       tx({ date: '2026-07-01', content: '넷플릭스', amount: -17000 }),
     ]
     expect(detectSubscriptions(txs).map((s) => s.merchant)).toEqual(['넷플릭스', '유튜브 프리미엄'])
+  })
+})
+
+describe('categoryTrendRanking', () => {
+  it('computes changeAmount against the average of prior months that actually have data', () => {
+    const txs = [
+      tx({ date: '2026-07-10', category: '식비', amount: -50000 }),
+      tx({ date: '2026-06-10', category: '식비', amount: -30000 }),
+      tx({ date: '2026-05-10', category: '식비', amount: -40000 }),
+      // no 식비 data in 2026-04 — average should be over the 2 months that exist, not 3
+    ]
+    const result = categoryTrendRanking(txs, '2026-07')
+    expect(result).toEqual([{ category: '식비', currentAmount: 50000, baselineAmount: 35000, changeAmount: 15000 }])
+  })
+
+  it('excludes a category with no data at all in the 3 prior months', () => {
+    const txs = [tx({ date: '2026-07-10', category: '신규카테고리', amount: -10000 })]
+    expect(categoryTrendRanking(txs, '2026-07')).toEqual([])
+  })
+
+  it('includes a category with baseline data even if the current month has none (changeAmount negative)', () => {
+    const txs = [tx({ date: '2026-06-10', category: '여행/숙박', amount: -300000 })]
+    const result = categoryTrendRanking(txs, '2026-07')
+    expect(result).toEqual([
+      { category: '여행/숙박', currentAmount: 0, baselineAmount: 300000, changeAmount: -300000 },
+    ])
+  })
+
+  it('sorts by changeAmount descending (biggest increase first, biggest decrease last)', () => {
+    const txs = [
+      tx({ date: '2026-07-10', category: '교통', amount: -20000 }),
+      tx({ date: '2026-06-10', category: '교통', amount: -10000 }), // +10000
+      tx({ date: '2026-07-10', category: '문화/여가', amount: -5000 }),
+      tx({ date: '2026-06-10', category: '문화/여가', amount: -50000 }), // -45000
+    ]
+    const result = categoryTrendRanking(txs, '2026-07')
+    expect(result.map((r) => r.category)).toEqual(['교통', '문화/여가'])
+  })
+
+  it('excludes non-spending flow types from both current and baseline calculations', () => {
+    const txs = [
+      tx({ date: '2026-07-10', category: '급여', amount: 3000000, flowType: 'income', type: '수입' }),
+      tx({ date: '2026-06-10', category: '급여', amount: 3000000, flowType: 'income', type: '수입' }),
+    ]
+    expect(categoryTrendRanking(txs, '2026-07')).toEqual([])
   })
 })

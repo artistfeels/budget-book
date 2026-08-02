@@ -79,3 +79,50 @@ export function detectSubscriptions(transactions: Transaction[]): Subscription[]
     .map((g) => ({ merchant: g.merchant, amount: g.amount, monthCount: g.months.size }))
     .sort((a, b) => b.amount - a.amount)
 }
+
+// month-offset helper — same exact pattern as the unexported `shiftMonth` in monthDetailAggregations.ts.
+function shiftMonth(month: string, delta: number): string {
+  const [y, m] = month.split('-').map(Number)
+  const date = new Date(y, m - 1 + delta, 1)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
+
+export interface CategoryTrend {
+  category: string
+  currentAmount: number
+  baselineAmount: number
+  changeAmount: number
+}
+
+export function categoryTrendRanking(transactions: Transaction[], month: string): CategoryTrend[] {
+  const baselineMonths = [shiftMonth(month, -1), shiftMonth(month, -2), shiftMonth(month, -3)]
+
+  const currentByCategory = new Map<string, number>()
+  for (const t of transactions) {
+    if (resolvedFlowType(t) !== 'spending' || t.date.slice(0, 7) !== month) continue
+    currentByCategory.set(t.category, (currentByCategory.get(t.category) ?? 0) + t.amount)
+  }
+
+  // category -> baseline month -> signed total, so the average only spans months that actually have data.
+  const baselineByCategory = new Map<string, Map<string, number>>()
+  for (const t of transactions) {
+    if (resolvedFlowType(t) !== 'spending') continue
+    const tMonth = t.date.slice(0, 7)
+    if (!baselineMonths.includes(tMonth)) continue
+    if (!baselineByCategory.has(t.category)) baselineByCategory.set(t.category, new Map())
+    const perMonth = baselineByCategory.get(t.category)!
+    perMonth.set(tMonth, (perMonth.get(tMonth) ?? 0) + t.amount)
+  }
+
+  const categories = new Set([...currentByCategory.keys(), ...baselineByCategory.keys()])
+  const result: CategoryTrend[] = []
+  for (const category of categories) {
+    const perMonth = baselineByCategory.get(category)
+    if (!perMonth || perMonth.size === 0) continue // no comparison data at all — skip, per design
+    const signedSum = [...perMonth.values()].reduce((sum, v) => sum + v, 0)
+    const baselineAmount = Math.max(0, -signedSum / perMonth.size)
+    const currentAmount = Math.max(0, -(currentByCategory.get(category) ?? 0))
+    result.push({ category, currentAmount, baselineAmount, changeAmount: currentAmount - baselineAmount })
+  }
+  return result.sort((a, b) => b.changeAmount - a.changeAmount)
+}
