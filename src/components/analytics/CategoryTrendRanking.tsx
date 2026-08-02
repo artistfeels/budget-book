@@ -1,0 +1,55 @@
+import { categoryTrendRanking } from '../../lib/analyticsAggregations'
+import { formatKRW } from '../../lib/format'
+import type { Transaction } from '../../types/transaction'
+
+interface CategoryTrendRankingProps {
+  transactions: Transaction[]
+  month: string
+}
+
+export default function CategoryTrendRanking({ transactions, month }: CategoryTrendRankingProps) {
+  const trends = categoryTrendRanking(transactions, month)
+  const increases = trends.filter((t) => t.changeAmount > 0).slice(0, 3)
+  const decreases = [...trends]
+    .reverse()
+    .filter((t) => t.changeAmount < 0)
+    .slice(0, 3)
+
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm">
+      <p className="mb-4 font-medium text-slate-700">카테고리 증감 랭킹 (직전 3개월 평균 대비)</p>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div>
+          <p className="mb-2 text-xs font-medium text-rose-600">증가</p>
+          {increases.length === 0 ? (
+            <p className="text-sm text-slate-400">증가한 카테고리가 없어요.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {increases.map((t) => (
+                <li key={t.category} className="flex items-center justify-between text-sm">
+                  <span className="text-slate-700">{t.category}</span>
+                  <span className="text-rose-600">+{formatKRW(t.changeAmount)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div>
+          <p className="mb-2 text-xs font-medium text-blue-600">감소</p>
+          {decreases.length === 0 ? (
+            <p className="text-sm text-slate-400">감소한 카테고리가 없어요.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {decreases.map((t) => (
+                <li key={t.category} className="flex items-center justify-between text-sm">
+                  <span className="text-slate-700">{t.category}</span>
+                  <span className="text-blue-600">{formatKRW(t.changeAmount)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
