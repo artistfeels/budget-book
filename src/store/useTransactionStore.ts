@@ -97,7 +97,7 @@ interface TransactionStoreState {
   addTransaction: (transaction: Transaction) => Promise<void>
   updateTransaction: (id: string, patch: Partial<Transaction>) => Promise<void>
   deleteTransaction: (id: string) => Promise<void>
-  setOverride: (id: string, override: 'saving' | 'spending' | null) => Promise<void>
+  setOverride: (id: string, override: 'spending' | 'neutral' | null) => Promise<void>
   addRule: (rule: Omit<ClassificationRule, 'id'>) => Promise<void>
 }
 

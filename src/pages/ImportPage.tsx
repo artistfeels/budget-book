@@ -11,6 +11,21 @@ export default function ImportPage() {
   const [error, setError] = useState<string | null>(null)
   const importRows = useTransactionStore((s) => s.importRows)
 
+  const [reclassifying, setReclassifying] = useState(false)
+
+  async function handleReclassifyAll() {
+    setReclassifying(true)
+    setError(null)
+    try {
+      await importRows([])
+      setSummary(null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setReclassifying(false)
+    }
+  }
+
   const months = useMemo(() => {
     const set = new Set(parsedRows.map((r) => r.date.slice(0, 7)))
     return [...set].sort()
@@ -48,6 +63,14 @@ export default function ImportPage() {
   return (
     <div className="min-h-screen bg-slate-50 p-8">
       <h1 className="mb-6 text-2xl font-bold text-slate-800">데이터 불러오기</h1>
+
+      <button
+        onClick={handleReclassifyAll}
+        disabled={reclassifying}
+        className="mb-6 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+      >
+        {reclassifying ? '재분류 중…' : '전체 재분류 (분류 알고리즘이 바뀐 뒤 파일 없이 다시 계산)'}
+      </button>
 
       <input
         type="file"
