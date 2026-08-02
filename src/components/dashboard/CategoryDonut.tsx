@@ -12,14 +12,10 @@ interface CategoryDonutProps {
 
 export default function CategoryDonut({ transactions }: CategoryDonutProps) {
   const [drilldown, setDrilldown] = useState<string | null>(null)
-  const [includeSaving, setIncludeSaving] = useState(false)
 
   const items: AmountBreakdownItem[] = useMemo(
-    () =>
-      drilldown
-        ? subcategoryBreakdown(transactions, drilldown, includeSaving)
-        : categoryBreakdown(transactions, includeSaving),
-    [transactions, drilldown, includeSaving]
+    () => (drilldown ? subcategoryBreakdown(transactions, drilldown) : categoryBreakdown(transactions)),
+    [transactions, drilldown]
   )
 
   const total = items.reduce((sum, i) => sum + i.amount, 0)
@@ -30,17 +26,11 @@ export default function CategoryDonut({ transactions }: CategoryDonutProps) {
         <p className="font-medium text-slate-700">
           지출 카테고리 구성 {drilldown && <span className="text-slate-400">/ {drilldown}</span>}
         </p>
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-1.5 text-xs text-slate-500">
-            <input type="checkbox" checked={includeSaving} onChange={(e) => setIncludeSaving(e.target.checked)} />
-            저축 포함
-          </label>
-          {drilldown && (
-            <button onClick={() => setDrilldown(null)} className="text-sm text-blue-600 hover:underline">
-              ← 대분류로 돌아가기
-            </button>
-          )}
-        </div>
+        {drilldown && (
+          <button onClick={() => setDrilldown(null)} className="text-sm text-blue-600 hover:underline">
+            ← 대분류로 돌아가기
+          </button>
+        )}
       </div>
       <div className="flex flex-col gap-4 sm:flex-row">
         <div className="sm:w-1/2">

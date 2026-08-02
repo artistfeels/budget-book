@@ -34,7 +34,7 @@ export default function DashboardPage() {
     const income = summariesInPeriod.reduce((sum, s) => sum + s.income, 0)
     const spending = summariesInPeriod.reduce((sum, s) => sum + s.spending, 0)
     const saving = summariesInPeriod.reduce((sum, s) => sum + s.saving, 0)
-    const netCashFlow = income - spending - saving
+    const netCashFlow = income - spending
     const savingsRate = income > 0 ? (income - spending) / income : null
     return { income, spending, saving, netCashFlow, savingsRate }
   }, [summariesInPeriod])

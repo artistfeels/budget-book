@@ -11,7 +11,6 @@ interface DayTransactionPanelProps {
 const AMOUNT_COLOR_BY_FLOW: Record<ReturnType<typeof resolvedFlowType>, string> = {
   income: 'text-blue-600',
   spending: 'text-rose-600',
-  saving: 'text-emerald-600',
   neutral: 'text-slate-500',
 }
 
