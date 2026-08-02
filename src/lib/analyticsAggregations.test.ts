@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { weekdaySpending, hourBucketSpending } from './analyticsAggregations'
+import { weekdaySpending, hourBucketSpending, detectSubscriptions } from './analyticsAggregations'
 import type { Transaction } from '../types/transaction'
 
 function tx(overrides: Partial<Transaction>): Transaction {
@@ -96,5 +96,65 @@ describe('hourBucketSpending', () => {
   it('returns all 5 buckets with 0 for an empty dataset', () => {
     expect(hourBucketSpending([])).toHaveLength(5)
     expect(hourBucketSpending([]).every((h) => h.amount === 0)).toBe(true)
+  })
+})
+
+describe('detectSubscriptions', () => {
+  it('detects a recurring merchant+amount pair present in the latest two months', () => {
+    const txs = [
+      tx({ date: '2026-06-01', content: '넷플릭스', amount: -17000 }),
+      tx({ date: '2026-07-01', content: '넷플릭스', amount: -17000 }),
+    ]
+    expect(detectSubscriptions(txs)).toEqual([{ merchant: '넷플릭스', amount: 17000, monthCount: 2 }])
+  })
+
+  it('counts every distinct month the pair appears in, not just the latest two', () => {
+    const txs = [
+      tx({ date: '2026-05-01', content: '넷플릭스', amount: -17000 }),
+      tx({ date: '2026-06-01', content: '넷플릭스', amount: -17000 }),
+      tx({ date: '2026-07-01', content: '넷플릭스', amount: -17000 }),
+    ]
+    expect(detectSubscriptions(txs)).toEqual([{ merchant: '넷플릭스', amount: 17000, monthCount: 3 }])
+  })
+
+  it('excludes a one-off purchase that only appears in the latest month', () => {
+    const txs = [
+      tx({ date: '2026-06-01', content: '넷플릭스', amount: -17000 }),
+      tx({ date: '2026-07-01', content: '넷플릭스', amount: -17000 }),
+      tx({ date: '2026-07-15', content: '가전제품', amount: -500000 }),
+    ]
+    expect(detectSubscriptions(txs)).toEqual([{ merchant: '넷플릭스', amount: 17000, monthCount: 2 }])
+  })
+
+  it('excludes a lapsed subscription that stopped before the latest month', () => {
+    const txs = [
+      tx({ date: '2026-05-01', content: '왓챠', amount: -12900 }),
+      tx({ date: '2026-06-01', content: '왓챠', amount: -12900 }),
+      tx({ date: '2026-07-01', content: '넷플릭스', amount: -17000 }), // unrelated tx to establish July as latest
+    ]
+    expect(detectSubscriptions(txs)).toEqual([])
+  })
+
+  it('returns an empty array when fewer than 2 distinct months of data exist', () => {
+    const txs = [tx({ date: '2026-07-01', content: '넷플릭스', amount: -17000 })]
+    expect(detectSubscriptions(txs)).toEqual([])
+  })
+
+  it('treats a different amount at the same merchant as a different subscription candidate', () => {
+    const txs = [
+      tx({ date: '2026-06-01', content: '통신비', amount: -50000 }),
+      tx({ date: '2026-07-01', content: '통신비', amount: -55000 }), // price changed — no 2-month match either way
+    ]
+    expect(detectSubscriptions(txs)).toEqual([])
+  })
+
+  it('sorts multiple detected subscriptions by amount descending', () => {
+    const txs = [
+      tx({ date: '2026-06-01', content: '유튜브 프리미엄', amount: -14900 }),
+      tx({ date: '2026-07-01', content: '유튜브 프리미엄', amount: -14900 }),
+      tx({ date: '2026-06-01', content: '넷플릭스', amount: -17000 }),
+      tx({ date: '2026-07-01', content: '넷플릭스', amount: -17000 }),
+    ]
+    expect(detectSubscriptions(txs).map((s) => s.merchant)).toEqual(['넷플릭스', '유튜브 프리미엄'])
   })
 })

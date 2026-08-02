@@ -51,3 +51,31 @@ export function hourBucketSpending(transactions: Transaction[]): HourBucketAmoun
   }
   return HOUR_BUCKETS.map((bucket, i) => ({ bucket, amount: Math.max(0, -totals[i]) }))
 }
+
+export interface Subscription {
+  merchant: string
+  amount: number
+  monthCount: number
+}
+
+export function detectSubscriptions(transactions: Transaction[]): Subscription[] {
+  const spendingTx = transactions.filter((t) => resolvedFlowType(t) === 'spending')
+  const months = [...new Set(spendingTx.map((t) => t.date.slice(0, 7)))].sort()
+  if (months.length < 2) return []
+  const latestMonth = months[months.length - 1]
+  const secondLatestMonth = months[months.length - 2]
+
+  const groups = new Map<string, { merchant: string; amount: number; months: Set<string> }>()
+  for (const t of spendingTx) {
+    const amount = Math.abs(t.amount)
+    const key = `${t.content}::${amount}`
+    const group = groups.get(key) ?? { merchant: t.content, amount, months: new Set<string>() }
+    group.months.add(t.date.slice(0, 7))
+    groups.set(key, group)
+  }
+
+  return [...groups.values()]
+    .filter((g) => g.months.has(latestMonth) && g.months.has(secondLatestMonth))
+    .map((g) => ({ merchant: g.merchant, amount: g.amount, monthCount: g.months.size }))
+    .sort((a, b) => b.amount - a.amount)
+}
