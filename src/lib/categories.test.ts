@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { SEED_EXPENSE_CATEGORIES, SEED_PAYMENT_METHODS, mergeObservedCategories, mergeObservedPaymentMethods } from './categories'
+import {
+  SEED_EXPENSE_CATEGORIES,
+  SEED_INCOME_CATEGORIES,
+  SEED_PAYMENT_METHODS,
+  mergeObservedCategories,
+  mergeObservedFlatList,
+  mergeObservedPaymentMethods,
+} from './categories'
 
 describe('mergeObservedPaymentMethods', () => {
   it('includes all seed methods', () => {
@@ -34,5 +41,24 @@ describe('mergeObservedCategories', () => {
   it('does not duplicate an existing subcategory', () => {
     const merged = mergeObservedCategories(SEED_EXPENSE_CATEGORIES, [{ category: '식비', subcategory: '배달' }])
     expect(merged['식비'].filter((s) => s === '배달')).toHaveLength(1)
+  })
+})
+
+describe('mergeObservedFlatList', () => {
+  it('includes every seed value', () => {
+    const merged = mergeObservedFlatList(SEED_INCOME_CATEGORIES, [])
+    for (const category of SEED_INCOME_CATEGORIES) {
+      expect(merged).toContain(category)
+    }
+  })
+
+  it('adds a new observed value not in the seed list', () => {
+    const merged = mergeObservedFlatList(SEED_INCOME_CATEGORIES, ['환급금'])
+    expect(merged).toContain('환급금')
+  })
+
+  it('does not duplicate an observed value already in the seed list', () => {
+    const merged = mergeObservedFlatList(SEED_INCOME_CATEGORIES, ['급여'])
+    expect(merged.filter((c) => c === '급여')).toHaveLength(1)
   })
 })
