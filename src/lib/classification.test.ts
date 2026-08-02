@@ -27,12 +27,12 @@ describe('classifyFlowType', () => {
     expect(classifyFlowType(input, [])).toBe('income')
   })
 
-  it('classifies a saving-account payment method as saving regardless of type', () => {
+  it('classifies a saving-account payment method as neutral regardless of type', () => {
     const input = base({ type: '이체', category: '이체', paymentMethod: '주택청약종합저축', amount: -100000 })
-    expect(classifyFlowType(input, [])).toBe('saving')
+    expect(classifyFlowType(input, [])).toBe('neutral')
   })
 
-  it('classifies a positive-amount (inflow) transaction on a saving-account payment method as income, not saving', () => {
+  it('classifies a positive-amount (inflow) transaction on a saving-account payment method as income, not neutral', () => {
     const input = base({
       type: '수입',
       category: '환급',
@@ -42,19 +42,19 @@ describe('classifyFlowType', () => {
     expect(classifyFlowType(input, [])).toBe('income')
   })
 
-  it('classifies an outgoing 이체>투자 as saving', () => {
+  it('classifies an outgoing 이체>투자 as neutral', () => {
     const input = base({ type: '이체', category: '투자', paymentMethod: 'MY 입출금통장', amount: -3000000 })
-    expect(classifyFlowType(input, [])).toBe('saving')
+    expect(classifyFlowType(input, [])).toBe('neutral')
   })
 
-  it('classifies an incoming 이체>투자 (redemption) as income', () => {
+  it('classifies an incoming 이체>투자 (redemption) as neutral too — internal account movement either way', () => {
     const input = base({ type: '이체', category: '투자', paymentMethod: 'OK파킹플렉스통장', amount: 1989192 })
-    expect(classifyFlowType(input, [])).toBe('income')
+    expect(classifyFlowType(input, [])).toBe('neutral')
   })
 
-  it('classifies 지출>금융>증권/투자 as saving', () => {
+  it('classifies 지출>금융>증권/투자 as neutral', () => {
     const input = base({ type: '지출', category: '금융', subcategory: '증권/투자', amount: -14260 })
-    expect(classifyFlowType(input, [])).toBe('saving')
+    expect(classifyFlowType(input, [])).toBe('neutral')
   })
 
   it('classifies 이체>카드대금 as neutral', () => {
@@ -78,23 +78,23 @@ describe('classifyFlowType', () => {
   })
 
   it('a manual override always wins over every automatic rule', () => {
-    const input = base({ flowTypeOverride: 'saving' })
-    expect(classifyFlowType(input, [])).toBe('saving')
+    const input = base({ flowTypeOverride: 'neutral' })
+    expect(classifyFlowType(input, [])).toBe('neutral')
   })
 
   it('a content-based user rule wins over the default spending classification', () => {
     const input = base({ content: '토스증권 자동이체' })
     const rules: ClassificationRule[] = [
-      { id: 'r1', matchType: 'content', matchValue: '토스증권 자동이체', flowType: 'saving' },
+      { id: 'r1', matchType: 'content', matchValue: '토스증권 자동이체', flowType: 'neutral' },
     ]
-    expect(classifyFlowType(input, rules)).toBe('saving')
+    expect(classifyFlowType(input, rules)).toBe('neutral')
   })
 
   it('a payment-method-based user rule wins over the default spending classification', () => {
     const input = base({ paymentMethod: '내마음대로적금' })
     const rules: ClassificationRule[] = [
-      { id: 'r1', matchType: 'payment_method', matchValue: '내마음대로적금', flowType: 'saving' },
+      { id: 'r1', matchType: 'payment_method', matchValue: '내마음대로적금', flowType: 'neutral' },
     ]
-    expect(classifyFlowType(input, rules)).toBe('saving')
+    expect(classifyFlowType(input, rules)).toBe('neutral')
   })
 })

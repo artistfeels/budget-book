@@ -9,7 +9,7 @@ export interface ClassificationInput {
   amount: number
   isPairedTransfer: boolean
   isUnmatchedTransfer: boolean
-  flowTypeOverride: 'saving' | 'spending' | null
+  flowTypeOverride: 'spending' | 'neutral' | null
 }
 
 const SAVING_PAYMENT_METHODS = ['주택청약종합저축', 'NH청년도약계좌', '월세 보증금']
@@ -29,15 +29,15 @@ export function classifyFlowType(input: ClassificationInput, rules: Classificati
   }
 
   if (SAVING_PAYMENT_METHODS.includes(input.paymentMethod) && input.amount < 0) {
-    return 'saving'
+    return 'neutral'
   }
 
   if (input.type === '이체' && input.category === '투자') {
-    return input.amount < 0 ? 'saving' : 'income'
+    return 'neutral'
   }
 
   if (input.type === '지출' && input.category === '금융' && input.subcategory === '증권/투자') {
-    return 'saving'
+    return 'neutral'
   }
 
   if (input.type === '이체' && input.category === '카드대금') {

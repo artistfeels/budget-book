@@ -1,5 +1,5 @@
 export type TransactionType = '수입' | '지출' | '이체'
-export type FlowType = 'income' | 'saving' | 'spending' | 'neutral'
+export type FlowType = 'income' | 'spending' | 'neutral'
 
 export interface Transaction {
   id: string
@@ -14,7 +14,7 @@ export interface Transaction {
   paymentMethod: string
   memo: string | null
   flowType: FlowType
-  flowTypeOverride: 'saving' | 'spending' | null
+  flowTypeOverride: 'spending' | 'neutral' | null
   transferPairId: string | null
   isPairedTransfer: boolean
   isUnmatchedTransfer: boolean
@@ -24,5 +24,5 @@ export interface ClassificationRule {
   id: string
   matchType: 'content' | 'payment_method'
   matchValue: string
-  flowType: 'saving' | 'spending'
+  flowType: 'spending' | 'neutral'
 }
