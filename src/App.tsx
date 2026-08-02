@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import AuthGuard from './auth/AuthGuard'
 import AppShell from './components/AppShell'
+import AnalyticsPage from './pages/AnalyticsPage'
 import DashboardPage from './pages/DashboardPage'
 import EntriesPage from './pages/EntriesPage'
 import ImportPage from './pages/ImportPage'
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/month/:yyyyMm" element={<MonthDetailPage />} />
           <Route path="/entries" element={<EntriesPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/import" element={<ImportPage />} />
         </Routes>
       </AppShell>
