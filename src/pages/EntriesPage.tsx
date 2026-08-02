@@ -102,6 +102,8 @@ export default function EntriesPage() {
     () => (!month || availableMonths.includes(month) ? availableMonths : [...availableMonths, month].sort()),
     [availableMonths, month]
   )
+  // Dropdown displays most recent month first; monthOptions itself stays ascending for the fallback-insertion logic above.
+  const monthOptionsDesc = useMemo(() => [...monthOptions].reverse(), [monthOptions])
 
   // Section switches also reset the filter dropdowns, whose option lists are section-specific.
   useEffect(() => {
@@ -349,7 +351,7 @@ export default function EntriesPage() {
         section={section}
         onSectionChange={setSection}
         month={month}
-        availableMonths={monthOptions}
+        availableMonths={monthOptionsDesc}
         isPartial={isPartialMonth(transactions, month)}
         onMonthChange={setMonth}
         search={search}
