@@ -101,7 +101,7 @@ export default function AnalyticsPage() {
       </div>
 
       <div>
-        <SavingsSimulator transactions={transactions} month={month} monthlySummaries={monthlySummaries} />
+        <SavingsSimulator key={month} transactions={transactions} month={month} monthlySummaries={monthlySummaries} />
       </div>
     </div>
   )
