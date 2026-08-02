@@ -108,11 +108,25 @@ export const useTransactionStore = create<TransactionStoreState>((set, get) => (
 
   async fetchAll() {
     set({ loading: true })
-    const [{ data: txRows, error: txError }, { data: ruleRows, error: ruleError }] = await Promise.all([
-      supabase.from('transactions').select('*'),
-      supabase.from('classification_rules').select('*'),
-    ])
-    if (txError) throw txError
+
+    // PostgREST caps a single response at 1000 rows by default. Without paging through
+    // .range(), any account with more than 1000 transactions silently loses the rows past
+    // the cap on every load — nothing is deleted server-side, they just never arrive here.
+    const pageSize = 1000
+    const txRows: TransactionRow[] = []
+    let offset = 0
+    while (true) {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .range(offset, offset + pageSize - 1)
+      if (error) throw error
+      txRows.push(...(data ?? []))
+      if (!data || data.length < pageSize) break
+      offset += pageSize
+    }
+
+    const { data: ruleRows, error: ruleError } = await supabase.from('classification_rules').select('*')
     if (ruleError) throw ruleError
 
     const rules: ClassificationRule[] = (ruleRows ?? []).map((r) => ({
@@ -122,7 +136,7 @@ export const useTransactionStore = create<TransactionStoreState>((set, get) => (
       flowType: r.flow_type,
     }))
 
-    const transactions = (txRows ?? []).map(rowToTransaction)
+    const transactions = txRows.map(rowToTransaction)
     set({ transactions, rules, loading: false })
   },
 
