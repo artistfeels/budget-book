@@ -120,6 +120,18 @@ export function detectSubscriptions(transactions: Transaction[]): Subscription[]
     .sort((a, b) => b.amount - a.amount)
 }
 
+// Detected recurring merchants that haven't posted a transaction yet in the given month — their
+// average amount is a near-certain remaining cost, useful as a floor under a statistical spending
+// projection (a subscription due on the 23rd is still coming even if the month started quietly).
+// Deliberately narrower than a category-level check: grouping by category flagged almost every
+// category with any 2-of-3-month history as "pending", which is most categories for a normal
+// spender — merchant-level detectSubscriptions is the more conservative, accurate signal.
+export function pendingSubscriptionTotal(transactions: Transaction[], month: string): number {
+  const subscriptions = detectSubscriptions(transactions)
+  const monthMerchants = new Set(transactions.filter((t) => t.date.slice(0, 7) === month).map((t) => t.content))
+  return subscriptions.filter((s) => !monthMerchants.has(s.merchant)).reduce((sum, s) => sum + s.amount, 0)
+}
+
 // month-offset helper — same exact pattern as the unexported `shiftMonth` in monthDetailAggregations.ts.
 function shiftMonth(month: string, delta: number): string {
   const [y, m] = month.split('-').map(Number)
@@ -165,43 +177,6 @@ export function categoryTrendRanking(transactions: Transaction[], month: string)
     result.push({ category, currentAmount, baselineAmount, changeAmount: currentAmount - baselineAmount })
   }
   return result.sort((a, b) => b.changeAmount - a.changeAmount)
-}
-
-export interface PendingCategoryCost {
-  category: string
-  amount: number
-  monthCount: number
-}
-
-// Categories with a reliable spending history (present in at least 2 of the last 3 months) that
-// haven't posted anything yet this month — catches recurring fixed costs like rent or a phone
-// bill as a near-certain remaining amount, even when the exact merchant text varies too much
-// month to month for detectSubscriptions to group on (category is a much steadier signal).
-export function pendingCategoryCosts(transactions: Transaction[], month: string): PendingCategoryCost[] {
-  const spendingTx = transactions.filter((t) => resolvedFlowType(t) === 'spending')
-  const baselineMonths = [shiftMonth(month, -1), shiftMonth(month, -2), shiftMonth(month, -3)]
-
-  const monthlyTotals = new Map<string, Map<string, number>>()
-  for (const t of spendingTx) {
-    const txMonth = t.date.slice(0, 7)
-    if (!baselineMonths.includes(txMonth)) continue
-    if (!monthlyTotals.has(t.category)) monthlyTotals.set(t.category, new Map())
-    const perMonth = monthlyTotals.get(t.category)!
-    perMonth.set(txMonth, (perMonth.get(txMonth) ?? 0) + Math.abs(t.amount))
-  }
-
-  const postedThisMonth = new Set(spendingTx.filter((t) => t.date.slice(0, 7) === month).map((t) => t.category))
-
-  const result: PendingCategoryCost[] = []
-  for (const [category, perMonth] of monthlyTotals) {
-    if (postedThisMonth.has(category) || perMonth.size < 2) continue
-    result.push({ category, amount: Math.round(mean([...perMonth.values()])), monthCount: perMonth.size })
-  }
-  return result.sort((a, b) => b.amount - a.amount)
-}
-
-export function pendingCategoryCostTotal(transactions: Transaction[], month: string): number {
-  return pendingCategoryCosts(transactions, month).reduce((sum, c) => sum + c.amount, 0)
 }
 
 export interface Insight {

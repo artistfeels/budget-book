@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { weekdaySpending, hourBucketSpending, detectSubscriptions, categoryTrendRanking, pendingCategoryCosts, pendingCategoryCostTotal, generateInsights, latestMonthWithSpending, topSpendingCategories } from './analyticsAggregations'
+import { weekdaySpending, hourBucketSpending, detectSubscriptions, pendingSubscriptionTotal, categoryTrendRanking, generateInsights, latestMonthWithSpending, topSpendingCategories } from './analyticsAggregations'
 import type { Transaction } from '../types/transaction'
 import type { MonthlySummary } from './aggregations'
 
@@ -263,59 +263,29 @@ describe('categoryTrendRanking', () => {
   })
 })
 
-describe('pendingCategoryCosts', () => {
-  it('flags a category with a reliable history that has not posted anything yet this month', () => {
+describe('pendingSubscriptionTotal', () => {
+  it('sums subscriptions whose merchant has not posted a transaction yet in the given month', () => {
     const txs = [
-      tx({ date: '2026-05-23', category: '주거비', amount: -700000 }),
-      tx({ date: '2026-06-23', category: '주거비', amount: -700000 }),
-      tx({ date: '2026-07-23', category: '주거비', amount: -700000 }),
-      tx({ date: '2026-08-01', category: '식비', amount: -10000 }),
+      tx({ date: '2026-05-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-06-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-07-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-08-01', content: '편의점', amount: -3000 }),
     ]
-    expect(pendingCategoryCosts(txs, '2026-08')).toEqual([{ category: '주거비', amount: 700000, monthCount: 3 }])
+    expect(pendingSubscriptionTotal(txs, '2026-08')).toBe(700000)
   })
 
-  it('excludes a category that has already posted this month', () => {
+  it('excludes a subscription that has already posted this month', () => {
     const txs = [
-      tx({ date: '2026-05-23', category: '주거비', amount: -700000 }),
-      tx({ date: '2026-06-23', category: '주거비', amount: -700000 }),
-      tx({ date: '2026-08-01', category: '주거비', amount: -700000 }),
+      tx({ date: '2026-05-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-06-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-07-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-08-05', content: '월세', amount: -700000 }),
     ]
-    expect(pendingCategoryCosts(txs, '2026-08')).toEqual([])
+    expect(pendingSubscriptionTotal(txs, '2026-08')).toBe(0)
   })
 
-  it('excludes a category present in fewer than 2 of the last 3 months (a one-off, not a recurring cost)', () => {
-    const txs = [
-      tx({ date: '2026-07-15', category: '문화생활비', amount: -300000 }),
-      tx({ date: '2026-08-01', category: '식비', amount: -10000 }),
-    ]
-    expect(pendingCategoryCosts(txs, '2026-08')).toEqual([])
-  })
-
-  it('picks up a category even when the merchant text differs every time, unlike merchant-based detection', () => {
-    const txs = [
-      tx({ date: '2026-05-10', category: '통신비', content: 'SKT 5월 요금', amount: -60000 }),
-      tx({ date: '2026-06-10', category: '통신비', content: 'SKT 6월 요금', amount: -65000 }),
-      tx({ date: '2026-07-10', category: '통신비', content: 'SKT 7월 요금', amount: -55000 }),
-    ]
-    expect(pendingCategoryCosts(txs, '2026-08')).toEqual([{ category: '통신비', amount: 60000, monthCount: 3 }])
-  })
-})
-
-describe('pendingCategoryCostTotal', () => {
-  it('sums the amounts from pendingCategoryCosts', () => {
-    const txs = [
-      tx({ date: '2026-05-23', category: '주거비', amount: -700000 }),
-      tx({ date: '2026-06-23', category: '주거비', amount: -700000 }),
-      tx({ date: '2026-07-23', category: '주거비', amount: -700000 }),
-      tx({ date: '2026-05-10', category: '통신비', amount: -60000 }),
-      tx({ date: '2026-06-10', category: '통신비', amount: -65000 }),
-      tx({ date: '2026-07-10', category: '통신비', amount: -55000 }),
-    ]
-    expect(pendingCategoryCostTotal(txs, '2026-08')).toBe(760000) // 700000 + (60000+65000+55000)/3
-  })
-
-  it('returns 0 when nothing is pending', () => {
-    expect(pendingCategoryCostTotal([tx({ date: '2026-08-01', category: '식비', amount: -10000 })], '2026-08')).toBe(0)
+  it('returns 0 when there are no detected subscriptions', () => {
+    expect(pendingSubscriptionTotal([tx({ date: '2026-08-01', content: '편의점', amount: -3000 })], '2026-08')).toBe(0)
   })
 })
 

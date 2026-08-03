@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { spendingPaceSeries } from '../../lib/monthDetailAggregations'
-import { pendingCategoryCosts } from '../../lib/analyticsAggregations'
+import { detectSubscriptions } from '../../lib/analyticsAggregations'
 import { formatKRW } from '../../lib/format'
 import type { Transaction } from '../../types/transaction'
 
@@ -23,18 +23,44 @@ export default function SpendingPaceChart({ transactions, month }: SpendingPaceC
   const result = useMemo(() => spendingPaceSeries(transactions, month, asOfDay), [transactions, month, asOfDay])
   const clampedAsOfDay = result.asOfDay
 
-  // Categories with a reliable spending history (rent, phone bill, etc.) that haven't posted
-  // anything yet this month are a near-certain remaining cost — use their known average as a
-  // floor under the statistical projection so a quiet start to the month can't make the estimate
-  // implausibly low. Grouped by category, not merchant text, since fixed bills often have
-  // slightly different transaction descriptions each month (usage amounts, invoice numbers, etc).
-  const pending = useMemo(() => pendingCategoryCosts(transactions, month), [transactions, month])
-  const pendingTotal = useMemo(() => pending.reduce((sum, c) => sum + c.amount, 0), [pending])
+  // Detected recurring merchants that haven't posted this month yet are a near-certain remaining
+  // cost (e.g. rent due on the 23rd) — use their known amount as a floor under the statistical
+  // projection so a quiet start to the month can't make the estimate implausibly low. Merchant-
+  // level (not category-level) on purpose: a category-wide check flagged almost every category
+  // with any 2-of-3-month history as "pending", which is most categories for a normal spender.
+  const subscriptions = useMemo(() => detectSubscriptions(transactions), [transactions])
+  const monthMerchants = useMemo(
+    () => new Set(transactions.filter((t) => t.date.slice(0, 7) === month).map((t) => t.content)),
+    [transactions, month]
+  )
+  const pendingSubscriptions = useMemo(
+    () => subscriptions.filter((s) => !monthMerchants.has(s.merchant)),
+    [subscriptions, monthMerchants]
+  )
+  const pendingTotal = useMemo(
+    () => pendingSubscriptions.reduce((sum, s) => sum + s.amount, 0),
+    [pendingSubscriptions]
+  )
+
   const isMonthInProgress = clampedAsOfDay < daysInMonth
   const actualSoFar = result.points[clampedAsOfDay - 1]?.thisMonth ?? 0
   const projectedTotal = isMonthInProgress
     ? Math.max(result.projectedMonthEndTotal, actualSoFar + pendingTotal)
     : result.projectedMonthEndTotal
+  const floorGap = projectedTotal - result.projectedMonthEndTotal
+
+  // Keep the projected LINE consistent with the headline total above: ramp the gap between the
+  // statistical projection and the subscription floor in smoothly across the remaining days,
+  // instead of only correcting the summary number while the chart line still ends somewhere else.
+  const chartPoints = useMemo(() => {
+    if (floorGap <= 0) return result.points
+    const remainingDays = daysInMonth - clampedAsOfDay
+    return result.points.map((p) => {
+      if (p.thisMonthProjected === null) return p
+      const rampFraction = remainingDays > 0 ? (p.day - clampedAsOfDay) / remainingDays : 1
+      return { ...p, thisMonthProjected: p.thisMonthProjected + floorGap * rampFraction }
+    })
+  }, [result.points, floorGap, clampedAsOfDay, daysInMonth])
 
   const isFaster = (result.percentVsLastMonthSameDay ?? 0) > 0
 
@@ -53,15 +79,15 @@ export default function SpendingPaceChart({ transactions, month }: SpendingPaceC
           {' · 이 속도면 월말 예상 '}
           <span className="font-bold text-slate-800">{formatKRW(Math.round(projectedTotal))}</span>
         </p>
-        {isMonthInProgress && pending.length > 0 && (
+        {isMonthInProgress && pendingSubscriptions.length > 0 && (
           <p className="mt-1 text-xs text-slate-400">
-            아직 안 나간 고정비 확정 {formatKRW(pendingTotal)}이 반영되어 있어요 (
-            {pending.map((c) => `${c.category} ${formatKRW(c.amount)}`).join(', ')})
+            아직 안 나간 구독·정기결제 확정 {formatKRW(pendingTotal)}이 반영되어 있어요 (
+            {pendingSubscriptions.map((s) => `${s.merchant} ${formatKRW(s.amount)}`).join(', ')})
           </p>
         )}
       </div>
       <ResponsiveContainer width="100%" height={280}>
-        <LineChart data={result.points}>
+        <LineChart data={chartPoints}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
           <XAxis dataKey="day" tick={{ fontSize: 11 }} />
           <YAxis tickFormatter={(v) => formatKRW(v)} tick={{ fontSize: 11 }} width={80} />
@@ -84,7 +110,7 @@ export default function SpendingPaceChart({ transactions, month }: SpendingPaceC
         </LineChart>
       </ResponsiveContainer>
       <p className="mt-2 text-xs text-slate-400">
-        {clampedAsOfDay}일까지 실제 데이터, 이후는 최근 3개월 지출 패턴에 이번 달 속도를 반영한 예상치입니다.
+        {clampedAsOfDay}일까지 실제 데이터, 이후는 최근 3개월 지출 패턴에 이번 달 속도와 남은 구독료를 반영한 예상치입니다.
       </p>
     </div>
   )
