@@ -10,6 +10,7 @@ import CalendarGrid from '../components/month/CalendarGrid'
 import SpendingPaceChart from '../components/month/SpendingPaceChart'
 import MonthSummaryCard from '../components/month/MonthSummaryCard'
 import MonthInfographics from '../components/month/MonthInfographics'
+import MonthCategoryChart from '../components/dashboard/MonthCategoryChart'
 import DayTransactionPanel from '../components/month/DayTransactionPanel'
 
 type Period = '1m' | '3m' | '6m' | '12m'
@@ -135,7 +136,8 @@ export default function DashboardPage() {
             <SpendingPaceChart transactions={transactions} month={month} />
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <MonthCategoryChart transactions={transactions} month={month} />
             <MonthInfographics transactions={transactions} month={month} />
           </div>
         </>
