@@ -47,7 +47,12 @@ export default function CalendarGrid({ transactions, month, onDayClick }: Calend
                   {band.weekIndex + 1}주차
                   {band.isPartial && <span className="ml-1 rounded bg-slate-200 px-1 text-slate-500">부분 주</span>}
                 </span>
-                <span className="text-lg font-bold text-rose-600">{formatKRW(band.total)}</span>
+                <span className="flex items-baseline gap-2">
+                  {band.income > 0 && (
+                    <span className="text-sm font-semibold text-blue-600">+{formatKRW(band.income)}</span>
+                  )}
+                  <span className="text-lg font-bold text-rose-600">-{formatKRW(band.total)}</span>
+                </span>
               </div>
             </div>
             <div className="grid grid-cols-7 gap-1 bg-blue-50/40 p-1">

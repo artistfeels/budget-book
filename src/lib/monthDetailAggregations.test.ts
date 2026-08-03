@@ -56,8 +56,22 @@ describe('weeklySpendingBands', () => {
     const txs = [tx({ date: '2026-06-01', amount: -7000 }), tx({ date: '2026-06-29', amount: -3000 })]
     const bands = weeklySpendingBands(txs, '2026-06')
     expect(bands).toHaveLength(5)
-    expect(bands[0]).toEqual({ weekIndex: 0, startDate: '2026-06-01', endDate: '2026-06-07', total: 7000, isPartial: false })
-    expect(bands[4]).toEqual({ weekIndex: 4, startDate: '2026-06-29', endDate: '2026-06-30', total: 3000, isPartial: true })
+    expect(bands[0]).toEqual({
+      weekIndex: 0,
+      startDate: '2026-06-01',
+      endDate: '2026-06-07',
+      total: 7000,
+      income: 0,
+      isPartial: false,
+    })
+    expect(bands[4]).toEqual({
+      weekIndex: 4,
+      startDate: '2026-06-29',
+      endDate: '2026-06-30',
+      total: 3000,
+      income: 0,
+      isPartial: true,
+    })
   })
 
   it('starts with a partial week when the month does not begin on a Monday', () => {
@@ -65,8 +79,32 @@ describe('weeklySpendingBands', () => {
     const txs: Transaction[] = []
     const bands = weeklySpendingBands(txs, '2026-07')
     expect(bands).toHaveLength(5)
-    expect(bands[0]).toEqual({ weekIndex: 0, startDate: '2026-07-01', endDate: '2026-07-05', total: 0, isPartial: true })
-    expect(bands[4]).toEqual({ weekIndex: 4, startDate: '2026-07-27', endDate: '2026-07-31', total: 0, isPartial: true })
+    expect(bands[0]).toEqual({
+      weekIndex: 0,
+      startDate: '2026-07-01',
+      endDate: '2026-07-05',
+      total: 0,
+      income: 0,
+      isPartial: true,
+    })
+    expect(bands[4]).toEqual({
+      weekIndex: 4,
+      startDate: '2026-07-27',
+      endDate: '2026-07-31',
+      total: 0,
+      income: 0,
+      isPartial: true,
+    })
+  })
+
+  it('sums income separately from spending within each week', () => {
+    const txs = [
+      tx({ date: '2026-06-02', amount: 3000000, flowType: 'income', type: '수입' }),
+      tx({ date: '2026-06-03', amount: -5000 }),
+    ]
+    const bands = weeklySpendingBands(txs, '2026-06')
+    expect(bands[0].income).toBe(3000000)
+    expect(bands[0].total).toBe(5000)
   })
 })
 
@@ -151,6 +189,44 @@ describe('spendingPaceSeries', () => {
     const expectedAvg = (280000 + 31000 + 31000) / 3
     expect(result.points[27].threeMonthAvg).toBeCloseTo(expectedAvg) // day 28: Feb's last day
     expect(result.points[28].threeMonthAvg).toBeCloseTo(expectedAvg) // day 29: Feb has ended but must still count
+  })
+
+  it('projects using the trailing-3-month pattern shape scaled by this month\'s pace, catching a known spike (e.g. rent) before it happens', () => {
+    const txs = [
+      tx({ date: '2026-06-05', amount: -10000 }),
+      tx({ date: '2026-06-23', amount: -700000 }),
+      tx({ date: '2026-05-05', amount: -10000 }),
+      tx({ date: '2026-05-23', amount: -700000 }),
+      tx({ date: '2026-04-05', amount: -10000 }),
+      tx({ date: '2026-04-23', amount: -700000 }),
+      tx({ date: '2026-07-05', amount: -10000 }), // this month tracks the baseline exactly through day 10
+    ]
+    const result = spendingPaceSeries(txs, '2026-07', 10)
+    // A flat daily-rate projection (old behavior) would give 10000/10 * 31 ≈ 31,000, missing the
+    // day-23 rent spike entirely. The pattern-scaled projection should land near the full 710,000.
+    expect(result.projectedMonthEndTotal).toBeCloseTo(710000)
+  })
+
+  it('falls back to a flat daily-rate projection when there is no usable historical baseline yet', () => {
+    const txs = [tx({ date: '2026-06-01', amount: -10000 }), tx({ date: '2026-06-02', amount: -10000 })]
+    const result = spendingPaceSeries(txs, '2026-06', 2)
+    expect(result.projectedMonthEndTotal).toBe(300000) // dailyRate 10000/day * 30 days, no baseline to pattern-match against
+  })
+
+  it('clamps the pace-scale factor so a single early outlier cannot blow up the month-end projection', () => {
+    const txs = [
+      tx({ date: '2026-06-05', amount: -10000 }),
+      tx({ date: '2026-06-23', amount: -700000 }),
+      tx({ date: '2026-05-05', amount: -10000 }),
+      tx({ date: '2026-05-23', amount: -700000 }),
+      tx({ date: '2026-04-05', amount: -10000 }),
+      tx({ date: '2026-04-23', amount: -700000 }),
+      tx({ date: '2026-07-05', amount: -500000 }), // 50x the baseline's day-5 spend
+    ]
+    const result = spendingPaceSeries(txs, '2026-07', 10)
+    // Unclamped scale would be 500000/10000 = 50x, projecting into the millions. Clamped to 3x:
+    // 500000 + (710000 - 10000) * 3 = 2,600,000.
+    expect(result.projectedMonthEndTotal).toBeCloseTo(2600000)
   })
 })
 

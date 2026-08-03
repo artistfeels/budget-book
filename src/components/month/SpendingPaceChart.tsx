@@ -57,7 +57,9 @@ export default function SpendingPaceChart({ transactions, month }: SpendingPaceC
           />
         </LineChart>
       </ResponsiveContainer>
-      <p className="mt-2 text-xs text-slate-400">{clampedAsOfDay}일까지 실제 데이터, 이후는 현재 속도 기준 예상치입니다.</p>
+      <p className="mt-2 text-xs text-slate-400">
+        {clampedAsOfDay}일까지 실제 데이터, 이후는 최근 3개월 지출 패턴에 이번 달 속도를 반영한 예상치입니다.
+      </p>
     </div>
   )
 }

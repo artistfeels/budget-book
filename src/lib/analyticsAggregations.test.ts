@@ -197,6 +197,16 @@ describe('detectSubscriptions', () => {
     expect(detectSubscriptions(txs)).toEqual([{ merchant: '넷플릭스', amount: 17000, monthCount: 2 }])
   })
 
+  it('still detects a subscription when the latest month is barely started and this cycle\'s bill has not posted yet', () => {
+    const txs = [
+      tx({ date: '2026-05-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-06-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-07-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-08-01', content: '편의점', amount: -3000 }), // establishes August as the barely-started latest month
+    ]
+    expect(detectSubscriptions(txs).map((s) => s.merchant)).toContain('월세')
+  })
+
   it('sorts multiple detected subscriptions by amount descending', () => {
     const txs = [
       tx({ date: '2026-06-01', content: '유튜브 프리미엄', amount: -14900 }),

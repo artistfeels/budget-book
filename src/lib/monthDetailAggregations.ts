@@ -34,6 +34,7 @@ export interface WeeklyBand {
   startDate: string
   endDate: string
   total: number
+  income: number
   isPartial: boolean
 }
 
@@ -42,6 +43,7 @@ export function weeklySpendingBands(transactions: Transaction[], month: string):
   const bands: WeeklyBand[] = []
   let current: string[] = []
   let currentTotal = 0
+  let currentIncome = 0
   let weekIndex = 0
 
   function flush() {
@@ -51,11 +53,13 @@ export function weeklySpendingBands(transactions: Transaction[], month: string):
       startDate: current[0],
       endDate: current[current.length - 1],
       total: currentTotal,
+      income: currentIncome,
       isPartial: current.length < 7,
     })
     weekIndex++
     current = []
     currentTotal = 0
+    currentIncome = 0
   }
 
   for (const day of daily) {
@@ -64,6 +68,7 @@ export function weeklySpendingBands(transactions: Transaction[], month: string):
     if (isMonday && current.length > 0) flush()
     current.push(day.date)
     currentTotal += day.spending
+    currentIncome += day.income
   }
   flush()
 
@@ -143,10 +148,28 @@ export function spendingPaceSeries(transactions: Transaction[], month: string, a
 
   const atAsOf = points[clampedAsOfDay - 1]?.thisMonth ?? 0
   const dailyRate = clampedAsOfDay > 0 ? atAsOf / clampedAsOfDay : 0
+
+  // Pattern-aware projection: instead of assuming a flat daily rate for the rest of the month,
+  // scale the trailing-3-month average's remaining-days *shape* by how this month is tracking
+  // relative to that average so far. This lets a known within-month pattern (e.g. rent landing on
+  // the 23rd) show up in the projection before that day arrives, not just after. Falls back to the
+  // flat rate when there's no usable historical baseline yet (avgAtAsOf is 0 — e.g. brand new data).
+  // The scale factor is clamped so a handful of early-month transactions can't extrapolate into an
+  // absurd month-end total (e.g. one unusually large early purchase implying 10x normal pace).
+  const avgAtAsOf = clampedAsOfDay > 0 ? points[clampedAsOfDay - 1]?.threeMonthAvg ?? 0 : 0
+  const rawScale = avgAtAsOf > 0 ? atAsOf / avgAtAsOf : null
+  const scale = rawScale !== null ? Math.min(3, Math.max(0.3, rawScale)) : null
+
   for (let day = clampedAsOfDay; day <= daysInMonth; day++) {
-    points[day - 1].thisMonthProjected = dailyRate * day
+    points[day - 1].thisMonthProjected =
+      scale !== null
+        ? atAsOf + ((points[day - 1].threeMonthAvg ?? avgAtAsOf) - avgAtAsOf) * scale
+        : dailyRate * day
   }
-  const projectedMonthEndTotal = dailyRate * daysInMonth
+  const projectedMonthEndTotal =
+    scale !== null
+      ? atAsOf + ((points[daysInMonth - 1]?.threeMonthAvg ?? avgAtAsOf) - avgAtAsOf) * scale
+      : dailyRate * daysInMonth
 
   // "Same day" comparison: if the previous month has fewer days than asOfDay (e.g. viewing
   // July fully against a 30-day June), fall back to the previous month's last available day

@@ -68,13 +68,16 @@ export function detectSubscriptions(transactions: Transaction[]): Subscription[]
   const spendingTx = transactions.filter((t) => resolvedFlowType(t) === 'spending')
   const months = [...new Set(spendingTx.map((t) => t.date.slice(0, 7)))].sort()
   if (months.length < 2) return []
-  const latestMonth = months[months.length - 1]
   // Grouping by merchant name alone (not merchant+exact-amount) catches usage-billed recurring
   // costs — phone/internet bills, rent with periodic adjustments — where the amount isn't
   // identical every month. A trailing 4-month window requiring presence in at least 3 tolerates
-  // one skipped/delayed month; requiring presence in the latest month excludes lapsed subscriptions.
+  // one skipped/delayed month.
   const windowMonths = months.slice(-4)
   const minMonths = Math.min(3, windowMonths.length)
+  // "Recent" is the last 2 months, not strictly the latest one — the latest month is often still
+  // in progress, and a bill that posts later in the cycle (e.g. rent on the 23rd) wouldn't have
+  // posted yet in a barely-started month, which would otherwise wrongly exclude an active subscription.
+  const recentMonths = new Set(windowMonths.slice(-2))
 
   const groups = new Map<
     string,
@@ -96,7 +99,8 @@ export function detectSubscriptions(transactions: Transaction[]): Subscription[]
 
   return [...groups.values()]
     .filter((g) => {
-      if (g.monthlyTotals.size < minMonths || !g.monthlyTotals.has(latestMonth)) return false
+      if (g.monthlyTotals.size < minMonths) return false
+      if (![...recentMonths].some((m) => g.monthlyTotals.has(m))) return false
       // Recurring bills/subscriptions post at most ~once a month — reject merchants visited
       // many times a month (coffee shops, convenience stores) that would otherwise pass the
       // month-count check purely from being frequent, not because they recur monthly.
