@@ -120,6 +120,15 @@ export function detectSubscriptions(transactions: Transaction[]): Subscription[]
     .sort((a, b) => b.amount - a.amount)
 }
 
+// Detected recurring merchants that haven't posted a transaction yet in the given month — their
+// average amount is a near-certain remaining cost, useful as a floor under a statistical spending
+// projection (a subscription due on the 23rd is still coming even if the month started quietly).
+export function pendingSubscriptionTotal(transactions: Transaction[], month: string): number {
+  const subscriptions = detectSubscriptions(transactions)
+  const monthMerchants = new Set(transactions.filter((t) => t.date.slice(0, 7) === month).map((t) => t.content))
+  return subscriptions.filter((s) => !monthMerchants.has(s.merchant)).reduce((sum, s) => sum + s.amount, 0)
+}
+
 // month-offset helper — same exact pattern as the unexported `shiftMonth` in monthDetailAggregations.ts.
 function shiftMonth(month: string, delta: number): string {
   const [y, m] = month.split('-').map(Number)

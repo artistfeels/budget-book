@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { weekdaySpending, hourBucketSpending, detectSubscriptions, categoryTrendRanking, generateInsights, latestMonthWithSpending, topSpendingCategories } from './analyticsAggregations'
+import { weekdaySpending, hourBucketSpending, detectSubscriptions, pendingSubscriptionTotal, categoryTrendRanking, generateInsights, latestMonthWithSpending, topSpendingCategories } from './analyticsAggregations'
 import type { Transaction } from '../types/transaction'
 import type { MonthlySummary } from './aggregations'
 
@@ -215,6 +215,32 @@ describe('detectSubscriptions', () => {
       tx({ date: '2026-07-01', content: '넷플릭스', amount: -17000 }),
     ]
     expect(detectSubscriptions(txs).map((s) => s.merchant)).toEqual(['넷플릭스', '유튜브 프리미엄'])
+  })
+})
+
+describe('pendingSubscriptionTotal', () => {
+  it('sums subscriptions whose merchant has not posted a transaction yet in the given month', () => {
+    const txs = [
+      tx({ date: '2026-05-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-06-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-07-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-08-01', content: '편의점', amount: -3000 }),
+    ]
+    expect(pendingSubscriptionTotal(txs, '2026-08')).toBe(700000)
+  })
+
+  it('excludes a subscription that has already posted this month', () => {
+    const txs = [
+      tx({ date: '2026-05-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-06-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-07-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-08-05', content: '월세', amount: -700000 }),
+    ]
+    expect(pendingSubscriptionTotal(txs, '2026-08')).toBe(0)
+  })
+
+  it('returns 0 when there are no detected subscriptions', () => {
+    expect(pendingSubscriptionTotal([tx({ date: '2026-08-01', content: '편의점', amount: -3000 })], '2026-08')).toBe(0)
   })
 })
 
