@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { spendingPaceSeries } from '../../lib/monthDetailAggregations'
-import { pendingSubscriptionTotal } from '../../lib/analyticsAggregations'
+import { pendingCategoryCosts } from '../../lib/analyticsAggregations'
 import { formatKRW } from '../../lib/format'
 import type { Transaction } from '../../types/transaction'
 
@@ -23,14 +23,17 @@ export default function SpendingPaceChart({ transactions, month }: SpendingPaceC
   const result = useMemo(() => spendingPaceSeries(transactions, month, asOfDay), [transactions, month, asOfDay])
   const clampedAsOfDay = result.asOfDay
 
-  // Detected recurring merchants that haven't posted this month yet are a near-certain remaining
-  // cost (e.g. rent due on the 23rd) — use their known amount as a floor under the statistical
-  // projection so a quiet start to the month can't make the estimate implausibly low.
-  const pendingSubscriptions = useMemo(() => pendingSubscriptionTotal(transactions, month), [transactions, month])
+  // Categories with a reliable spending history (rent, phone bill, etc.) that haven't posted
+  // anything yet this month are a near-certain remaining cost — use their known average as a
+  // floor under the statistical projection so a quiet start to the month can't make the estimate
+  // implausibly low. Grouped by category, not merchant text, since fixed bills often have
+  // slightly different transaction descriptions each month (usage amounts, invoice numbers, etc).
+  const pending = useMemo(() => pendingCategoryCosts(transactions, month), [transactions, month])
+  const pendingTotal = useMemo(() => pending.reduce((sum, c) => sum + c.amount, 0), [pending])
   const isMonthInProgress = clampedAsOfDay < daysInMonth
   const actualSoFar = result.points[clampedAsOfDay - 1]?.thisMonth ?? 0
   const projectedTotal = isMonthInProgress
-    ? Math.max(result.projectedMonthEndTotal, actualSoFar + pendingSubscriptions)
+    ? Math.max(result.projectedMonthEndTotal, actualSoFar + pendingTotal)
     : result.projectedMonthEndTotal
 
   const isFaster = (result.percentVsLastMonthSameDay ?? 0) > 0
@@ -50,9 +53,10 @@ export default function SpendingPaceChart({ transactions, month }: SpendingPaceC
           {' · 이 속도면 월말 예상 '}
           <span className="font-bold text-slate-800">{formatKRW(Math.round(projectedTotal))}</span>
         </p>
-        {isMonthInProgress && pendingSubscriptions > 0 && (
+        {isMonthInProgress && pending.length > 0 && (
           <p className="mt-1 text-xs text-slate-400">
-            이 중 아직 안 나간 구독·정기결제 확정 {formatKRW(pendingSubscriptions)}이 반영되어 있어요.
+            아직 안 나간 고정비 확정 {formatKRW(pendingTotal)}이 반영되어 있어요 (
+            {pending.map((c) => `${c.category} ${formatKRW(c.amount)}`).join(', ')})
           </p>
         )}
       </div>
