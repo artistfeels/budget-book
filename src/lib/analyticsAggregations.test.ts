@@ -141,12 +141,32 @@ describe('detectSubscriptions', () => {
     expect(detectSubscriptions(txs)).toEqual([])
   })
 
-  it('treats a different amount at the same merchant as a different subscription candidate', () => {
+  it('still detects a merchant recurring across months even when the amount varies (usage-billed costs)', () => {
     const txs = [
       tx({ date: '2026-06-01', content: '통신비', amount: -50000 }),
-      tx({ date: '2026-07-01', content: '통신비', amount: -55000 }), // price changed — no 2-month match either way
+      tx({ date: '2026-07-01', content: '통신비', amount: -55000 }), // usage varied — amount isn't identical
     ]
-    expect(detectSubscriptions(txs)).toEqual([])
+    expect(detectSubscriptions(txs)).toEqual([{ merchant: '통신비', amount: 52500, monthCount: 2 }])
+  })
+
+  it('tolerates one skipped month within a trailing 4-month window', () => {
+    const txs = [
+      tx({ date: '2026-04-01', content: '월세', amount: -700000 }),
+      tx({ date: '2026-05-01', content: '월세', amount: -700000 }),
+      // 2026-06 skipped (e.g. late payment recorded oddly) — still present in 3 of the last 4 months
+      tx({ date: '2026-07-01', content: '월세', amount: -700000 }),
+    ]
+    expect(detectSubscriptions(txs)).toEqual([{ merchant: '월세', amount: 700000, monthCount: 3 }])
+  })
+
+  it('excludes a merchant present in fewer than 3 of the trailing 4 months', () => {
+    const txs = [
+      tx({ date: '2026-04-01', content: '가끔결제', amount: -30000 }),
+      tx({ date: '2026-07-01', content: '가끔결제', amount: -30000 }),
+      tx({ date: '2026-05-01', content: '무관거래', amount: -1000 }), // keeps 2026-05 in the month set
+      tx({ date: '2026-06-01', content: '무관거래', amount: -1000 }), // keeps 2026-06 in the month set
+    ]
+    expect(detectSubscriptions(txs).map((s) => s.merchant)).not.toContain('가끔결제')
   })
 
   it('sorts multiple detected subscriptions by amount descending', () => {

@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 
 const navItems = [
   { to: '/', label: '대시보드', end: true },
+  { to: '/monthly', label: '월간 상세', end: false },
   { to: '/entries', label: '거래 관리', end: false },
   { to: '/analytics', label: '분석', end: false },
   { to: '/import', label: '불러오기', end: false },

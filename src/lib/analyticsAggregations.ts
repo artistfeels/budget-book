@@ -65,20 +65,30 @@ export function detectSubscriptions(transactions: Transaction[]): Subscription[]
   const months = [...new Set(spendingTx.map((t) => t.date.slice(0, 7)))].sort()
   if (months.length < 2) return []
   const latestMonth = months[months.length - 1]
-  const secondLatestMonth = months[months.length - 2]
+  // Grouping by merchant name alone (not merchant+exact-amount) catches usage-billed recurring
+  // costs — phone/internet bills, rent with periodic adjustments — where the amount isn't
+  // identical every month. A trailing 4-month window requiring presence in at least 3 tolerates
+  // one skipped/delayed month; requiring presence in the latest month excludes lapsed subscriptions.
+  const windowMonths = months.slice(-4)
+  const minMonths = Math.min(3, windowMonths.length)
 
-  const groups = new Map<string, { merchant: string; amount: number; months: Set<string> }>()
+  const groups = new Map<string, { merchant: string; amounts: number[]; months: Set<string> }>()
   for (const t of spendingTx) {
-    const amount = Math.abs(t.amount)
-    const key = `${t.content}::${amount}`
-    const group = groups.get(key) ?? { merchant: t.content, amount, months: new Set<string>() }
-    group.months.add(t.date.slice(0, 7))
-    groups.set(key, group)
+    const txMonth = t.date.slice(0, 7)
+    if (!windowMonths.includes(txMonth)) continue
+    const group = groups.get(t.content) ?? { merchant: t.content, amounts: [], months: new Set<string>() }
+    group.amounts.push(Math.abs(t.amount))
+    group.months.add(txMonth)
+    groups.set(t.content, group)
   }
 
   return [...groups.values()]
-    .filter((g) => g.months.has(latestMonth) && g.months.has(secondLatestMonth))
-    .map((g) => ({ merchant: g.merchant, amount: g.amount, monthCount: g.months.size }))
+    .filter((g) => g.months.size >= minMonths && g.months.has(latestMonth))
+    .map((g) => ({
+      merchant: g.merchant,
+      amount: Math.round(g.amounts.reduce((sum, a) => sum + a, 0) / g.amounts.length),
+      monthCount: g.months.size,
+    }))
     .sort((a, b) => b.amount - a.amount)
 }
 

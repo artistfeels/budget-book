@@ -35,10 +35,16 @@ export default function AnalyticsPage() {
 
   const monthlySummaries = useMemo(() => summarizeByMonth(transactions), [transactions])
 
+  // Anchored on the selected month (not always the latest available month) — otherwise
+  // picking an older month in the dropdown while a short period (e.g. 최근 1개월) is active
+  // would silently show a *different*, more-recent month's data in the period-scoped widgets.
   const selectedMonths = useMemo(() => {
     const count = PERIOD_OPTIONS.find((p) => p.value === period)?.months ?? 12
-    return availableMonths.slice(-count)
-  }, [availableMonths, period])
+    const anchorIndex = month ? availableMonths.indexOf(month) : -1
+    if (anchorIndex === -1) return availableMonths.slice(-count)
+    const start = Math.max(0, anchorIndex - count + 1)
+    return availableMonths.slice(start, anchorIndex + 1)
+  }, [availableMonths, period, month])
 
   const periodTransactions = useMemo(
     () => transactions.filter((t) => selectedMonths.includes(t.date.slice(0, 7))),

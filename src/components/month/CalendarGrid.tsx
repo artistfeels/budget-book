@@ -15,11 +15,7 @@ export default function CalendarGrid({ transactions, month, onDayClick }: Calend
   const daily = useMemo(() => dailySummaries(transactions, month), [transactions, month])
   const bands = useMemo(() => weeklySpendingBands(transactions, month), [transactions, month])
 
-  const avgWeeklyTotal = useMemo(() => {
-    if (bands.length === 0) return 0
-    return bands.reduce((sum, b) => sum + b.total, 0) / bands.length
-  }, [bands])
-
+  const maxWeeklyTotal = useMemo(() => Math.max(1, ...bands.map((b) => b.total)), [bands])
   const maxSpending = useMemo(() => Math.max(1, ...daily.map((d) => d.spending)), [daily])
 
   const firstDayOffset = useMemo(() => {
@@ -37,11 +33,24 @@ export default function CalendarGrid({ transactions, month, onDayClick }: Calend
       </div>
       {bands.map((band) => {
         const bandDays = daily.filter((d) => d.date >= band.startDate && d.date <= band.endDate)
-        const delta = avgWeeklyTotal > 0 ? ((band.total - avgWeeklyTotal) / avgWeeklyTotal) * 100 : 0
+        const weeklyBarWidth = (band.total / maxWeeklyTotal) * 100
 
         return (
-          <div key={band.weekIndex} className="relative mb-1 rounded-lg" style={{ backgroundColor: 'rgba(37, 99, 235, 0.08)' }}>
-            <div className="grid grid-cols-7 gap-1 p-1">
+          <div key={band.weekIndex} className="mb-3 overflow-hidden rounded-lg border border-slate-100">
+            <div className="relative px-3 py-2">
+              <div
+                className="absolute inset-y-0 left-0 bg-rose-50"
+                style={{ width: `${band.total > 0 ? weeklyBarWidth : 0}%` }}
+              />
+              <div className="relative flex items-center justify-between">
+                <span className="text-xs font-medium text-slate-500">
+                  {band.weekIndex + 1}주차
+                  {band.isPartial && <span className="ml-1 rounded bg-slate-200 px-1 text-slate-500">부분 주</span>}
+                </span>
+                <span className="text-lg font-bold text-rose-600">{formatKRW(band.total)}</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-7 gap-1 bg-blue-50/40 p-1">
               {band.weekIndex === 0 &&
                 Array.from({ length: firstDayOffset }).map((_, i) => <div key={`empty-${i}`} />)}
               {bandDays.map((day) => {
@@ -59,17 +68,6 @@ export default function CalendarGrid({ transactions, month, onDayClick }: Calend
                   </button>
                 )
               })}
-            </div>
-            <div className="flex items-center justify-between px-2 pb-1 text-xs text-slate-500">
-              <span>
-                {band.weekIndex + 1}주차 · 지출 {formatKRW(band.total)}
-                {band.isPartial && <span className="ml-1 rounded bg-slate-200 px-1 text-slate-500">부분 주</span>}
-              </span>
-              {avgWeeklyTotal > 0 && (
-                <span className={delta >= 0 ? 'text-rose-600' : 'text-emerald-600'}>
-                  {delta >= 0 ? '▲' : '▼'} {Math.abs(delta).toFixed(0)}%
-                </span>
-              )}
             </div>
           </div>
         )

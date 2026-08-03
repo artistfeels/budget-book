@@ -127,6 +127,18 @@ describe('spendingPaceSeries', () => {
     expect(result.percentVsLastMonthSameDay).toBeCloseTo(1) // (12000 - 6000) / 6000
     expect(result.projectedMonthEndTotal).toBe(12000) // dailyRate = 12000/30, not diluted by /31
   })
+
+  it('falls back to the previous month\'s last day when the previous month is shorter (e.g. July viewed fully vs June)', () => {
+    // 2026-07 has 31 days; 2026-06 (the previous month) has only 30.
+    const txs = [
+      tx({ date: '2026-07-01', amount: -20000 }),
+      tx({ date: '2026-06-01', amount: -10000 }),
+    ]
+    const result = spendingPaceSeries(txs, '2026-07', 31)
+    expect(result.asOfDay).toBe(31)
+    expect(result.points[29].lastMonth).toBe(10000) // June's cumulative total through its last day (30)
+    expect(result.percentVsLastMonthSameDay).toBeCloseTo(1) // (20000-10000)/10000
+  })
 })
 
 describe('monthInfographics', () => {

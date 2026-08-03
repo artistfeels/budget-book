@@ -1,17 +1,11 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { listAvailableMonths, summarizeByMonth } from '../lib/aggregations'
-import { latestMonthWithSpending } from '../lib/analyticsAggregations'
 import { useTransactionStore } from '../store/useTransactionStore'
 import KpiCards from '../components/dashboard/KpiCards'
 import MonthlyTrendChart from '../components/dashboard/MonthlyTrendChart'
 import CategoryDonut from '../components/dashboard/CategoryDonut'
 import PaymentMethodPie from '../components/dashboard/PaymentMethodPie'
-import CalendarGrid from '../components/month/CalendarGrid'
-import SpendingPaceChart from '../components/month/SpendingPaceChart'
-import MonthSummaryCard from '../components/month/MonthSummaryCard'
-import MonthInfographics from '../components/month/MonthInfographics'
-import MonthCategoryChart from '../components/dashboard/MonthCategoryChart'
-import DayTransactionPanel from '../components/month/DayTransactionPanel'
 
 type Period = '1m' | '3m' | '6m' | '12m'
 
@@ -22,17 +16,11 @@ const PERIOD_OPTIONS: { value: Period; label: string; months: number }[] = [
   { value: '12m', label: '최근 12개월', months: 12 },
 ]
 
-function shiftMonth(month: string, delta: number): string {
-  const [y, m] = month.split('-').map(Number)
-  const date = new Date(y, m - 1 + delta, 1)
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-}
-
 export default function DashboardPage() {
   const transactions = useTransactionStore((s) => s.transactions)
+  const navigate = useNavigate()
   const [period, setPeriod] = useState<Period>('12m')
   const [compact, setCompact] = useState(false)
-  const [selectedDay, setSelectedDay] = useState<string | null>(null)
 
   const availableMonths = useMemo(() => listAvailableMonths(transactions), [transactions])
   const monthlySummaries = useMemo(() => summarizeByMonth(transactions), [transactions])
@@ -66,18 +54,6 @@ export default function DashboardPage() {
     return lastTwo.length === 2 ? lastTwo[0] : undefined
   }, [monthlySummaries])
 
-  // Month-detail widgets (calendar/pace/summary) are scoped to a single month,
-  // independent of the period toggle above — same pattern as the analytics tab's month selector.
-  const defaultMonth = useMemo(
-    () => latestMonthWithSpending(transactions, availableMonths),
-    [transactions, availableMonths]
-  )
-  const [selectedMonth, setSelectedMonth] = useState<string | undefined>(undefined)
-  const month = selectedMonth ?? defaultMonth
-
-  const monthSummary = monthlySummaries.find((s) => s.month === month)
-  const monthPreviousSummary = month ? monthlySummaries.find((s) => s.month === shiftMonth(month, -1)) : undefined
-
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -110,51 +86,14 @@ export default function DashboardPage() {
         onToggleCompact={() => setCompact((c) => !c)}
       />
 
-      {month && (
-        <>
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-lg font-bold text-slate-800">월간 상세</p>
-            <select
-              value={month}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="rounded-lg border px-3 py-1.5 text-sm font-medium text-slate-800"
-            >
-              {[...availableMonths].reverse().map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="mt-3">
-            <MonthSummaryCard current={monthSummary} previous={monthPreviousSummary} />
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <CalendarGrid transactions={transactions} month={month} onDayClick={setSelectedDay} />
-            <SpendingPaceChart transactions={transactions} month={month} />
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <MonthCategoryChart transactions={transactions} month={month} />
-            <MonthInfographics transactions={transactions} month={month} />
-          </div>
-        </>
-      )}
-
       <div className="mt-6">
-        <MonthlyTrendChart summaries={summariesInPeriod} onSelectMonth={setSelectedMonth} />
+        <MonthlyTrendChart summaries={summariesInPeriod} onSelectMonth={(month) => navigate(`/monthly/${month}`)} />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <CategoryDonut transactions={periodTransactions} />
         <PaymentMethodPie transactions={periodTransactions} />
       </div>
-
-      {selectedDay && (
-        <DayTransactionPanel date={selectedDay} transactions={transactions} onClose={() => setSelectedDay(null)} />
-      )}
     </div>
   )
 }

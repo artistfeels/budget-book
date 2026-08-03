@@ -144,7 +144,11 @@ export function spendingPaceSeries(transactions: Transaction[], month: string, a
   }
   const projectedMonthEndTotal = dailyRate * daysInMonth
 
-  const lastMonthAtAsOf = clampedAsOfDay <= prevDaily.length ? points[clampedAsOfDay - 1]?.lastMonth ?? null : null
+  // "Same day" comparison: if the previous month has fewer days than asOfDay (e.g. viewing
+  // July fully against a 30-day June), fall back to the previous month's last available day
+  // instead of bailing out to null — the previous month's data still exists, just not at that exact index.
+  const lastMonthSameDayIndex = Math.min(clampedAsOfDay, prevDaily.length)
+  const lastMonthAtAsOf = lastMonthSameDayIndex > 0 ? points[lastMonthSameDayIndex - 1]?.lastMonth ?? null : null
   const percentVsLastMonthSameDay =
     lastMonthAtAsOf !== null && lastMonthAtAsOf !== 0 ? (atAsOf - lastMonthAtAsOf) / lastMonthAtAsOf : null
 
