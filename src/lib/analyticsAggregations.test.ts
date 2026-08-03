@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { weekdaySpending, hourBucketSpending, detectSubscriptions, categoryTrendRanking, generateInsights, projectAnnualSaving, simulateSavings, latestMonthWithSpending, topSpendingCategories } from './analyticsAggregations'
+import { weekdaySpending, hourBucketSpending, detectSubscriptions, categoryTrendRanking, generateInsights, latestMonthWithSpending, topSpendingCategories } from './analyticsAggregations'
 import type { Transaction } from '../types/transaction'
 import type { MonthlySummary } from './aggregations'
 
@@ -245,32 +245,6 @@ describe('generateInsights', () => {
 
   it('returns an empty array when no condition is met', () => {
     expect(generateInsights([], '2026-07', [])).toEqual([])
-  })
-})
-
-describe('projectAnnualSaving', () => {
-  it('projects the trailing 3-month average saving times 12', () => {
-    const summaries = [summary({ month: '2026-05', saving: 300000 }), summary({ month: '2026-06', saving: 500000 }), summary({ month: '2026-07', saving: 700000 })]
-    expect(projectAnnualSaving(summaries)).toBe(6000000) // avg 500000 * 12
-  })
-
-  it('averages over fewer than 3 months when that is all that exists', () => {
-    expect(projectAnnualSaving([summary({ saving: 400000 })])).toBe(4800000)
-  })
-
-  it('returns 0 for no data', () => {
-    expect(projectAnnualSaving([])).toBe(0)
-  })
-})
-
-describe('simulateSavings', () => {
-  it('sums baseline * reduction * 12 across categories', () => {
-    const result = simulateSavings({ 식비: 100000, '카페/간식': 20000 }, { 식비: 0.2 })
-    expect(result).toBe(240000) // 100000 * 0.2 * 12; 카페/간식 has no entry in reductionByCategory -> 0
-  })
-
-  it('returns 0 when no reductions are set', () => {
-    expect(simulateSavings({ 식비: 100000 }, {})).toBe(0)
   })
 })
 

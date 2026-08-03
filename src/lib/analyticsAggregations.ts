@@ -180,23 +180,6 @@ export function generateInsights(
   return insights.slice(0, 5)
 }
 
-export function projectAnnualSaving(monthlySummaries: MonthlySummary[]): number {
-  const trailing = monthlySummaries.slice(-3)
-  if (trailing.length === 0) return 0
-  const avgMonthlySaving = trailing.reduce((sum, s) => sum + s.saving, 0) / trailing.length
-  return avgMonthlySaving * 12
-}
-
-export function simulateSavings(
-  categoryBaselines: Record<string, number>,
-  reductionByCategory: Record<string, number>
-): number {
-  return Object.entries(categoryBaselines).reduce((sum, [category, baseline]) => {
-    const reduction = reductionByCategory[category] ?? 0
-    return sum + baseline * reduction * 12
-  }, 0)
-}
-
 export function latestMonthWithSpending(transactions: Transaction[], availableMonths: string[]): string | undefined {
   for (let i = availableMonths.length - 1; i >= 0; i--) {
     const month = availableMonths[i]

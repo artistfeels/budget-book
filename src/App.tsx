@@ -6,7 +6,6 @@ import AnalyticsPage from './pages/AnalyticsPage'
 import DashboardPage from './pages/DashboardPage'
 import EntriesPage from './pages/EntriesPage'
 import ImportPage from './pages/ImportPage'
-import MonthDetailPage from './pages/MonthDetailPage'
 import { useTransactionStore } from './store/useTransactionStore'
 
 export default function App() {
@@ -23,7 +22,6 @@ export default function App() {
       <AppShell>
         <Routes>
           <Route path="/" element={<DashboardPage />} />
-          <Route path="/month/:yyyyMm" element={<MonthDetailPage />} />
           <Route path="/entries" element={<EntriesPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/import" element={<ImportPage />} />

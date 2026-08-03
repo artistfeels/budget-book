@@ -7,9 +7,17 @@ import WeekdayChart from '../components/analytics/WeekdayChart'
 import HourBucketChart from '../components/analytics/HourBucketChart'
 import CategoryTrendRanking from '../components/analytics/CategoryTrendRanking'
 import SubscriptionList from '../components/analytics/SubscriptionList'
-import SavingsSimulator from '../components/analytics/SavingsSimulator'
+import CategoryHeatmap from '../components/dashboard/CategoryHeatmap'
+import TopMerchants from '../components/dashboard/TopMerchants'
 
-type Period = 'all' | '6m' | '12m'
+type Period = '1m' | '3m' | '6m' | '12m'
+
+const PERIOD_OPTIONS: { value: Period; label: string; months: number }[] = [
+  { value: '1m', label: '최근 1개월', months: 1 },
+  { value: '3m', label: '최근 3개월', months: 3 },
+  { value: '6m', label: '최근 6개월', months: 6 },
+  { value: '12m', label: '최근 12개월', months: 12 },
+]
 
 export default function AnalyticsPage() {
   const transactions = useTransactionStore((s) => s.transactions)
@@ -28,8 +36,7 @@ export default function AnalyticsPage() {
   const monthlySummaries = useMemo(() => summarizeByMonth(transactions), [transactions])
 
   const selectedMonths = useMemo(() => {
-    if (period === 'all') return availableMonths
-    const count = period === '6m' ? 6 : 12
+    const count = PERIOD_OPTIONS.find((p) => p.value === period)?.months ?? 12
     return availableMonths.slice(-count)
   }, [availableMonths, period])
 
@@ -68,15 +75,15 @@ export default function AnalyticsPage() {
             ))}
           </select>
           <div className="flex gap-2">
-            {(['6m', '12m', 'all'] as Period[]).map((p) => (
+            {PERIOD_OPTIONS.map((p) => (
               <button
-                key={p}
-                onClick={() => setPeriod(p)}
+                key={p.value}
+                onClick={() => setPeriod(p.value)}
                 className={`rounded-lg px-4 py-1.5 text-sm font-medium ${
-                  period === p ? 'bg-blue-600 text-white' : 'bg-white text-slate-500 hover:text-slate-800'
+                  period === p.value ? 'bg-blue-600 text-white' : 'bg-white text-slate-500 hover:text-slate-800'
                 }`}
               >
-                {p === '6m' ? '최근 6개월' : p === '12m' ? '최근 12개월' : '전체'}
+                {p.label}
               </button>
             ))}
           </div>
@@ -97,11 +104,12 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="mb-6">
-        <SubscriptionList transactions={periodTransactions} />
+        <CategoryHeatmap transactions={periodTransactions} />
       </div>
 
-      <div>
-        <SavingsSimulator key={month} transactions={transactions} month={month} monthlySummaries={monthlySummaries} />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <TopMerchants transactions={periodTransactions} />
+        <SubscriptionList transactions={periodTransactions} />
       </div>
     </div>
   )

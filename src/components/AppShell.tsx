@@ -12,7 +12,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-6xl items-center gap-6 px-8 py-4">
+        <div className="mx-auto flex max-w-[1800px] items-center gap-6 px-8 py-4">
           <span className="text-lg font-bold text-slate-800">가계부</span>
           <nav className="flex gap-4">
             {navItems.map((item) => (
@@ -32,7 +32,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-8 py-8">{children}</main>
+      <main className="mx-auto max-w-[1800px] px-8 py-8">{children}</main>
     </div>
   )
 }
