@@ -115,7 +115,9 @@ export default function AnalyticsPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <TopMerchants transactions={periodTransactions} />
-        <SubscriptionList transactions={periodTransactions} />
+        {/* Full transaction history, not periodTransactions — detectSubscriptions needs its own
+            multi-month trailing window regardless of the period toggle, same as CategoryTrendRanking above. */}
+        <SubscriptionList transactions={transactions} />
       </div>
     </div>
   )

@@ -113,14 +113,18 @@ export function spendingPaceSeries(transactions: Transaction[], month: string, a
     if (day <= daysInMonth) thisCum += daily[day - 1].spending
     if (day <= prevDaily.length) lastCum += prevDaily[day - 1].spending
 
+    // Once a baseline month's own days run out (e.g. Feb ends at day 28 while the viewed month
+    // has 31), keep contributing its held cumulative total to the average instead of dropping it
+    // — a shorter baseline month should flatten the average line past its end, not yank it down
+    // by silently reducing avgCount.
     let avgSum = 0
     let avgCount = 0
     avgMonthsDaily.forEach((d, i) => {
       if (day <= d.length) {
         avgCums[i] += d[day - 1].spending
-        avgSum += avgCums[i]
-        avgCount++
       }
+      avgSum += avgCums[i]
+      avgCount++
     })
 
     points.push({

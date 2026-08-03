@@ -139,6 +139,19 @@ describe('spendingPaceSeries', () => {
     expect(result.points[29].lastMonth).toBe(10000) // June's cumulative total through its last day (30)
     expect(result.percentVsLastMonthSameDay).toBeCloseTo(1) // (20000-10000)/10000
   })
+
+  it('holds a shorter baseline month\'s total in the 3-month average instead of dropping it once its days run out', () => {
+    // Viewed month 2026-03 has 31 days; baseline 2026-02 (one of the three trailing months) has only 28.
+    const txs = [
+      tx({ date: '2026-02-01', amount: -280000 }),
+      tx({ date: '2026-01-01', amount: -31000 }),
+      tx({ date: '2025-12-01', amount: -31000 }),
+    ]
+    const result = spendingPaceSeries(txs, '2026-03', 31)
+    const expectedAvg = (280000 + 31000 + 31000) / 3
+    expect(result.points[27].threeMonthAvg).toBeCloseTo(expectedAvg) // day 28: Feb's last day
+    expect(result.points[28].threeMonthAvg).toBeCloseTo(expectedAvg) // day 29: Feb has ended but must still count
+  })
 })
 
 describe('monthInfographics', () => {

@@ -14,7 +14,7 @@ export default function SubscriptionList({ transactions }: SubscriptionListProps
     <div className="rounded-xl bg-white p-6 shadow-sm">
       <p className="mb-4 font-medium text-slate-700">구독·정기결제</p>
       {subscriptions.length === 0 ? (
-        <p className="text-sm text-slate-400">최근 2개월 연속 반복된 결제가 없어요.</p>
+        <p className="text-sm text-slate-400">최근 몇 달간 꾸준히 반복된 결제가 없어요.</p>
       ) : (
         <>
           <table className="w-full text-sm">

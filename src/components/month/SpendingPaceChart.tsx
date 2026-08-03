@@ -12,8 +12,12 @@ interface SpendingPaceChartProps {
 export default function SpendingPaceChart({ transactions, month }: SpendingPaceChartProps) {
   const [year, monthNum] = month.split('-').map(Number)
   const daysInMonth = new Date(year, monthNum, 0).getDate()
-  const isCurrentMonth = month === new Date().toISOString().slice(0, 7)
-  const asOfDay = isCurrentMonth ? new Date().getDate() : daysInMonth
+  const now = new Date()
+  // Compare against a locally-derived month string, not toISOString() (UTC) — otherwise this
+  // mismatches with new Date().getDate() (local) for part of the day around month boundaries.
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const isCurrentMonth = month === currentMonth
+  const asOfDay = isCurrentMonth ? now.getDate() : daysInMonth
 
   const result = useMemo(() => spendingPaceSeries(transactions, month, asOfDay), [transactions, month, asOfDay])
   const clampedAsOfDay = result.asOfDay

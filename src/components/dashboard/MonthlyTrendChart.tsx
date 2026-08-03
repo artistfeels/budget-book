@@ -29,7 +29,7 @@ export default function MonthlyTrendChart({ summaries, onSelectMonth }: MonthlyT
           <Line type="monotone" dataKey="netCashFlow" name="순현금흐름" stroke="#0f172a" strokeWidth={2} dot={false} />
         </ComposedChart>
       </ResponsiveContainer>
-      <p className="mt-2 text-xs text-slate-400">막대를 클릭하면 아래 월간 상세 위젯들이 그 달로 바뀝니다.</p>
+      <p className="mt-2 text-xs text-slate-400">막대를 클릭하면 그 달의 월간 상세 화면으로 이동합니다.</p>
     </div>
   )
 }

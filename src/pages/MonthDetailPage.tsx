@@ -29,7 +29,9 @@ export default function MonthDetailPage() {
     [transactions, availableMonths]
   )
 
-  const month = yyyyMm ?? defaultMonth
+  // Ignore an invalid/unknown :yyyyMm (e.g. a stale or hand-edited URL) rather than rendering
+  // a month selector with no matching option and blank widgets.
+  const month = yyyyMm && availableMonths.includes(yyyyMm) ? yyyyMm : defaultMonth
 
   if (!month) {
     return (

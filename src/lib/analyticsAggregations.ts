@@ -60,6 +60,10 @@ export interface Subscription {
   monthCount: number
 }
 
+function mean(nums: number[]): number {
+  return nums.reduce((sum, n) => sum + n, 0) / nums.length
+}
+
 export function detectSubscriptions(transactions: Transaction[]): Subscription[] {
   const spendingTx = transactions.filter((t) => resolvedFlowType(t) === 'spending')
   const months = [...new Set(spendingTx.map((t) => t.date.slice(0, 7)))].sort()
@@ -72,22 +76,42 @@ export function detectSubscriptions(transactions: Transaction[]): Subscription[]
   const windowMonths = months.slice(-4)
   const minMonths = Math.min(3, windowMonths.length)
 
-  const groups = new Map<string, { merchant: string; amounts: number[]; months: Set<string> }>()
+  const groups = new Map<
+    string,
+    { merchant: string; monthlyTotals: Map<string, number>; monthlyCounts: Map<string, number> }
+  >()
   for (const t of spendingTx) {
     const txMonth = t.date.slice(0, 7)
     if (!windowMonths.includes(txMonth)) continue
-    const group = groups.get(t.content) ?? { merchant: t.content, amounts: [], months: new Set<string>() }
-    group.amounts.push(Math.abs(t.amount))
-    group.months.add(txMonth)
+    const group = groups.get(t.content) ?? {
+      merchant: t.content,
+      monthlyTotals: new Map<string, number>(),
+      monthlyCounts: new Map<string, number>(),
+    }
+    const amount = Math.abs(t.amount)
+    group.monthlyTotals.set(txMonth, (group.monthlyTotals.get(txMonth) ?? 0) + amount)
+    group.monthlyCounts.set(txMonth, (group.monthlyCounts.get(txMonth) ?? 0) + 1)
     groups.set(t.content, group)
   }
 
   return [...groups.values()]
-    .filter((g) => g.months.size >= minMonths && g.months.has(latestMonth))
+    .filter((g) => {
+      if (g.monthlyTotals.size < minMonths || !g.monthlyTotals.has(latestMonth)) return false
+      // Recurring bills/subscriptions post at most ~once a month — reject merchants visited
+      // many times a month (coffee shops, convenience stores) that would otherwise pass the
+      // month-count check purely from being frequent, not because they recur monthly.
+      if (Math.max(...g.monthlyCounts.values()) > 2) return false
+      // Usage-billed costs (phone/internet) fluctuate month to month but not wildly — reject
+      // merchants whose monthly total varies too much to plausibly be the same recurring charge.
+      const totals = [...g.monthlyTotals.values()]
+      const avg = mean(totals)
+      const coefficientOfVariation = avg > 0 ? Math.sqrt(mean(totals.map((v) => (v - avg) ** 2))) / avg : 0
+      return coefficientOfVariation < 0.35
+    })
     .map((g) => ({
       merchant: g.merchant,
-      amount: Math.round(g.amounts.reduce((sum, a) => sum + a, 0) / g.amounts.length),
-      monthCount: g.months.size,
+      amount: Math.round(mean([...g.monthlyTotals.values()])),
+      monthCount: g.monthlyTotals.size,
     }))
     .sort((a, b) => b.amount - a.amount)
 }

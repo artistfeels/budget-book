@@ -169,6 +169,34 @@ describe('detectSubscriptions', () => {
     expect(detectSubscriptions(txs).map((s) => s.merchant)).not.toContain('가끔결제')
   })
 
+  it('excludes a merchant visited many times per month, even if it recurs monthly (not bill-like cadence)', () => {
+    const txs: Transaction[] = []
+    for (const month of ['2026-05', '2026-06', '2026-07']) {
+      for (let day = 1; day <= 10; day++) {
+        txs.push(tx({ date: `${month}-${String(day).padStart(2, '0')}`, content: '스타벅스', amount: -5000 }))
+      }
+    }
+    expect(detectSubscriptions(txs).map((s) => s.merchant)).not.toContain('스타벅스')
+  })
+
+  it('excludes a merchant whose monthly total varies too much to plausibly be a recurring bill', () => {
+    const txs = [
+      tx({ date: '2026-05-15', content: '이마트', amount: -50000 }),
+      tx({ date: '2026-06-15', content: '이마트', amount: -200000 }),
+      tx({ date: '2026-07-15', content: '이마트', amount: -30000 }),
+    ]
+    expect(detectSubscriptions(txs).map((s) => s.merchant)).not.toContain('이마트')
+  })
+
+  it('reports the average monthly total, not the average per-transaction amount, when a merchant bills twice in one month', () => {
+    const txs = [
+      tx({ date: '2026-06-01', content: '넷플릭스', amount: -8500 }),
+      tx({ date: '2026-06-15', content: '넷플릭스', amount: -8500 }), // billed twice this month
+      tx({ date: '2026-07-01', content: '넷플릭스', amount: -17000 }),
+    ]
+    expect(detectSubscriptions(txs)).toEqual([{ merchant: '넷플릭스', amount: 17000, monthCount: 2 }])
+  })
+
   it('sorts multiple detected subscriptions by amount descending', () => {
     const txs = [
       tx({ date: '2026-06-01', content: '유튜브 프리미엄', amount: -14900 }),
