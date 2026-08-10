@@ -102,6 +102,10 @@ export default function EntriesTable({
 
   return (
     <div className="overflow-x-auto rounded-xl bg-white p-6 shadow-sm">
+      <div className="mb-3 flex items-center justify-between border-b pb-3 text-sm font-medium text-slate-700">
+        <span>합계 ({rows.length}건)</span>
+        <span>{formatKRW(totalAmount)}</span>
+      </div>
       <div className="mb-3 flex items-center justify-between">
         <button
           onClick={onBulkDelete}
@@ -194,11 +198,6 @@ export default function EntriesTable({
           + 추가
         </button>
       )}
-
-      <div className="mt-4 flex items-center justify-between border-t pt-3 text-sm font-medium text-slate-700">
-        <span>합계 ({rows.length}건)</span>
-        <span>{formatKRW(totalAmount)}</span>
-      </div>
     </div>
   )
 }
