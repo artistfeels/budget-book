@@ -28,7 +28,7 @@ export default function KpiCards({
     {
       label: '실질 저축률',
       value: savingsRate === null ? '—' : `${(savingsRate * 100).toFixed(1)}%`,
-      color: 'text-slate-800',
+      color: 'text-slate-800 dark:text-slate-100',
     },
     {
       label: '순현금흐름',
@@ -40,15 +40,18 @@ export default function KpiCards({
   return (
     <div>
       <div className="mb-3 flex justify-end">
-        <label className="flex items-center gap-2 text-sm text-slate-500">
+        <label className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
           <input type="checkbox" checked={compact} onChange={onToggleCompact} />
           만원 단위로 표시
         </label>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {cards.map((card) => (
-          <div key={card.label} className="rounded-xl bg-white p-5 shadow-sm">
-            <p className="mb-2 text-sm text-slate-500">{card.label}</p>
+          <div
+            key={card.label}
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
+          >
+            <p className="mb-2 text-sm text-slate-500 dark:text-slate-400">{card.label}</p>
             <p className={`text-xl font-bold ${card.color}`}>
               {typeof card.value === 'number' ? fmt(card.value) : card.value}
             </p>

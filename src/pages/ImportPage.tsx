@@ -61,13 +61,13 @@ export default function ImportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
-      <h1 className="mb-6 text-2xl font-bold text-slate-800">데이터 불러오기</h1>
+    <div className="min-h-screen bg-slate-50 p-8 dark:bg-slate-950">
+      <h1 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-50">데이터 불러오기</h1>
 
       <button
         onClick={handleReclassifyAll}
         disabled={reclassifying}
-        className="mb-6 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+        className="mb-6 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
       >
         {reclassifying ? '재분류 중…' : '전체 재분류 (분류 알고리즘이 바뀐 뒤 파일 없이 다시 계산)'}
       </button>
@@ -79,17 +79,20 @@ export default function ImportPage() {
           const file = e.target.files?.[0]
           if (file) handleFile(file)
         }}
-        className="mb-6 block"
+        className="mb-6 block dark:text-slate-300"
       />
 
       {error && <p className="mb-4 text-rose-600">{error}</p>}
 
       {parsedRows.length > 0 && (
-        <div className="mb-6 rounded-xl bg-white p-6 shadow-sm">
-          <p className="mb-3 font-medium text-slate-700">불러올 월 선택 ({parsedRows.length}건 파싱됨)</p>
+        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+          <p className="mb-3 font-medium text-slate-700 dark:text-slate-200">불러올 월 선택 ({parsedRows.length}건 파싱됨)</p>
           <div className="mb-4 flex flex-wrap gap-2">
             {months.map((month) => (
-              <label key={month} className="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm">
+              <label
+                key={month}
+                className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm dark:border-slate-700 dark:text-slate-200"
+              >
                 <input
                   type="checkbox"
                   checked={selectedMonths.has(month)}
@@ -101,7 +104,7 @@ export default function ImportPage() {
           </div>
           <button
             onClick={handleImport}
-            className="rounded-lg bg-blue-600 px-5 py-2 font-medium text-white hover:bg-blue-700"
+            className="rounded-lg bg-accent px-5 py-2 font-medium text-white hover:bg-accent-dark"
           >
             선택한 월 불러오기
           </button>
@@ -109,18 +112,18 @@ export default function ImportPage() {
       )}
 
       {summary && (
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <p className="text-slate-700">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+          <p className="text-slate-700 dark:text-slate-200">
             신규 {summary.inserted}건, 중복(스킵) {summary.duplicates}건
           </p>
         </div>
       )}
 
       {parsedRows.length > 0 && (
-        <div className="mt-6 overflow-x-auto rounded-xl bg-white p-6 shadow-sm">
+        <div className="mt-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-slate-500">
+              <tr className="border-b border-slate-200 text-left text-slate-500 dark:border-slate-800 dark:text-slate-400">
                 <th className="pb-2 pr-4">날짜</th>
                 <th className="pb-2 pr-4">타입</th>
                 <th className="pb-2 pr-4">대분류</th>
@@ -131,7 +134,7 @@ export default function ImportPage() {
             </thead>
             <tbody>
               {parsedRows.slice(0, 50).map((row, i) => (
-                <tr key={i} className="border-b last:border-0">
+                <tr key={i} className="border-b border-slate-100 text-slate-700 last:border-0 dark:border-slate-800 dark:text-slate-200">
                   <td className="py-1.5 pr-4">{row.date}</td>
                   <td className="py-1.5 pr-4">{row.type}</td>
                   <td className="py-1.5 pr-4">{row.category}</td>
@@ -145,7 +148,7 @@ export default function ImportPage() {
             </tbody>
           </table>
           {parsedRows.length > 50 && (
-            <p className="mt-2 text-xs text-slate-400">처음 50건만 미리보기로 표시됩니다.</p>
+            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">처음 50건만 미리보기로 표시됩니다.</p>
           )}
         </div>
       )}

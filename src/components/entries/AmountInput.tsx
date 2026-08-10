@@ -23,7 +23,9 @@ export default function AmountInput({ value, onChange, className }: AmountInputP
           setDraft(String(value))
           setEditing(true)
         }}
-        className={className ?? 'w-full rounded px-2 py-1 text-right text-sm hover:bg-slate-50'}
+        className={
+          className ?? 'w-full rounded px-2 py-1 text-right text-sm hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-800'
+        }
       >
         {value.toLocaleString('ko-KR')}
       </button>
@@ -46,7 +48,9 @@ export default function AmountInput({ value, onChange, className }: AmountInputP
         if (e.key === 'Enter') commit()
         if (e.key === 'Escape') setEditing(false)
       }}
-      className={className ?? 'w-full rounded border px-2 py-1 text-right text-sm'}
+      className={
+        className ?? 'w-full rounded border border-slate-200 px-2 py-1 text-right text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
+      }
     />
   )
 }

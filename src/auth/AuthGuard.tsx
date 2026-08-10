@@ -15,7 +15,7 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
   }, [])
 
   if (session === undefined) {
-    return <div className="p-8 text-slate-500">불러오는 중...</div>
+    return <div className="min-h-screen bg-slate-50 p-8 text-slate-500 dark:bg-slate-950 dark:text-slate-400">불러오는 중...</div>
   }
 
   if (session === null) {

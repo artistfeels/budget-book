@@ -52,7 +52,7 @@ function EditableCell({
         type="date"
         value={row.date}
         onChange={(e) => onChange('date', e.target.value)}
-        className="w-full rounded border px-2 py-1 text-sm"
+        className="w-full rounded border border-slate-200 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
       />
     )
   }
@@ -62,7 +62,7 @@ function EditableCell({
         type="text"
         value={row.content}
         onChange={(e) => onChange('content', e.target.value)}
-        className="w-full rounded border px-2 py-1 text-sm"
+        className="w-full rounded border border-slate-200 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
       />
     )
   }
@@ -101,8 +101,8 @@ export default function EntriesTable({
   const allSelected = rows.length > 0 && rows.every((r) => selectedIds.has(r.id))
 
   return (
-    <div className="overflow-x-auto rounded-xl bg-white p-6 shadow-sm">
-      <div className="mb-3 flex items-center justify-between border-b pb-3 text-sm font-medium text-slate-700">
+    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+      <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-3 text-sm font-medium text-slate-700 dark:border-slate-800 dark:text-slate-200">
         <span>합계 ({rows.length}건)</span>
         <span>{formatKRW(totalAmount)}</span>
       </div>
@@ -110,14 +110,14 @@ export default function EntriesTable({
         <button
           onClick={onBulkDelete}
           disabled={selectedIds.size === 0}
-          className="rounded-lg bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-600 disabled:opacity-40"
+          className="rounded-lg bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-600 disabled:opacity-40 dark:bg-rose-950 dark:text-rose-400"
         >
           선택 삭제 ({selectedIds.size})
         </button>
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b text-left text-slate-500">
+          <tr className="border-b border-slate-200 text-left text-slate-500 dark:border-slate-800 dark:text-slate-400">
             <th className="w-8 pb-2">
               <input type="checkbox" checked={allSelected} onChange={onToggleSelectAll} />
             </th>
@@ -126,7 +126,7 @@ export default function EntriesTable({
                 {col.type === 'date' || col.type === 'amount' ? (
                   <button
                     onClick={() => onSortChange(col.key as SortField)}
-                    className="font-medium hover:text-slate-800"
+                    className="font-medium hover:text-slate-800 dark:hover:text-slate-100"
                   >
                     {col.label} {sortField === col.key ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
                   </button>
@@ -140,7 +140,7 @@ export default function EntriesTable({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.id} className="border-b last:border-0">
+            <tr key={row.id} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
               <td className="py-1.5">
                 <input type="checkbox" checked={selectedIds.has(row.id)} onChange={() => onToggleSelect(row.id)} />
               </td>
@@ -154,12 +154,15 @@ export default function EntriesTable({
                   {overrideAction && (
                     <button
                       onClick={() => overrideAction.onClick(row)}
-                      className="text-xs text-slate-400 hover:text-blue-600"
+                      className="text-xs text-slate-400 hover:text-accent dark:text-slate-500"
                     >
                       {overrideAction.label(row)}
                     </button>
                   )}
-                  <button onClick={() => onDeleteRow(row.id)} className="text-xs text-slate-400 hover:text-rose-600">
+                  <button
+                    onClick={() => onDeleteRow(row.id)}
+                    className="text-xs text-slate-400 hover:text-rose-600 dark:text-slate-500"
+                  >
                     삭제
                   </button>
                 </div>
@@ -168,7 +171,7 @@ export default function EntriesTable({
           ))}
 
           {draftRow && (
-            <tr className="border-b bg-blue-50/40 last:border-0">
+            <tr className="border-b border-slate-100 bg-blue-50/40 last:border-0 dark:border-slate-800 dark:bg-blue-950/20">
               <td className="py-1.5" />
               {columns.map((col) => (
                 <td key={col.key} className="py-1.5 pr-4">
@@ -177,10 +180,10 @@ export default function EntriesTable({
               ))}
               <td className="py-1.5">
                 <div className="flex items-center gap-2">
-                  <button onClick={onDraftSave} className="text-xs font-medium text-blue-600">
+                  <button onClick={onDraftSave} className="text-xs font-medium text-accent">
                     저장
                   </button>
-                  <button onClick={onDraftCancel} className="text-xs text-slate-400">
+                  <button onClick={onDraftCancel} className="text-xs text-slate-400 dark:text-slate-500">
                     취소
                   </button>
                 </div>
@@ -193,7 +196,7 @@ export default function EntriesTable({
       {!draftRow && (
         <button
           onClick={onStartDraft}
-          className="mt-3 w-full rounded-lg border border-dashed py-2 text-sm text-slate-500 hover:bg-slate-50"
+          className="mt-3 w-full rounded-lg border border-dashed border-slate-300 py-2 text-sm text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
         >
           + 추가
         </button>

@@ -24,7 +24,7 @@ export default function MonthInfographics({ transactions, month }: MonthInfograp
       icon: '📊',
       label: '하루 평균 지출',
       value: formatKRW(Math.round(info.dailyAverageSpending)),
-      accent: 'text-slate-800',
+      accent: 'text-slate-800 dark:text-slate-100',
     },
     {
       icon: '🏪',
@@ -39,13 +39,16 @@ export default function MonthInfographics({ transactions, month }: MonthInfograp
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
       {cards.map((card) => (
-        <div key={card.label} className="rounded-xl bg-white p-5 shadow-sm">
+        <div
+          key={card.label}
+          className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
+        >
           <div className="mb-3 flex items-center gap-2">
             <span className="text-xl">{card.icon}</span>
-            <p className="text-xs font-medium text-slate-500">{card.label}</p>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{card.label}</p>
           </div>
           <p className={`text-2xl font-bold leading-tight ${card.accent}`}>{card.value}</p>
-          {card.sub && <p className="mt-1 text-sm text-slate-400">{card.sub}</p>}
+          {card.sub && <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">{card.sub}</p>}
         </div>
       ))}
     </div>

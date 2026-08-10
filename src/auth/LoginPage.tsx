@@ -9,12 +9,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50">
-      <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
-        <h1 className="mb-6 text-2xl font-bold text-slate-800">가계부</h1>
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
+      <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+        <h1 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-50">가계부</h1>
         <button
           onClick={signInWithGoogle}
-          className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+          className="rounded-lg bg-accent px-6 py-3 font-medium text-white hover:bg-accent-dark"
         >
           Google로 로그인
         </button>

@@ -52,14 +52,16 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-800">대시보드</h1>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-50">대시보드</h1>
         <div className="flex gap-2">
           {PERIOD_OPTIONS.map((p) => (
             <button
               key={p.value}
               onClick={() => setPeriod(p.value)}
               className={`rounded-lg px-4 py-1.5 text-sm font-medium ${
-                period === p.value ? 'bg-blue-600 text-white' : 'bg-white text-slate-500 hover:text-slate-800'
+                period === p.value
+                  ? 'bg-accent text-white'
+                  : 'bg-white text-slate-500 hover:text-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
               }`}
             >
               {p.label}

@@ -5,3 +5,9 @@
 body {
   font-family: 'Pretendard', system-ui, sans-serif;
 }
+
+@media (prefers-color-scheme: dark) {
+  body {
+    color-scheme: dark;
+  }
+}
