@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import BrandMark from './BrandMark'
 import ThemeToggle from './ThemeToggle'
 
 const navItems = [
@@ -10,37 +11,97 @@ const navItems = [
   { to: '/import', label: '불러오기', end: false },
 ]
 
+// Mirrors NavLink's own matching rules so the sliding pill and NavLink's `isActive` can never
+// disagree about which item is selected.
+function isActivePath(pathname: string, to: string, end: boolean): boolean {
+  if (end) return pathname === to
+  return pathname === to || pathname.startsWith(`${to}/`)
+}
+
 export default function AppShell({ children }: { children: ReactNode }) {
   // Keying <main> on the pathname remounts it per route, which re-runs the children's entrance
   // animations — so navigating feels like the new page assembles rather than snapping in.
   const { pathname } = useLocation()
+
+  const navRef = useRef<HTMLElement | null>(null)
+  const itemRefs = useRef(new Map<string, HTMLAnchorElement>())
+  const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null)
+  // Gates the transition off for the first measurement, so the pill doesn't visibly fly in from
+  // the left edge on page load — it should only animate when moving between items.
+  const [hasSettled, setHasSettled] = useState(false)
+
+  const activeTo = navItems.find((item) => isActivePath(pathname, item.to, item.end))?.to
+
+  const measure = useCallback(() => {
+    const nav = navRef.current
+    const el = activeTo ? itemRefs.current.get(activeTo) : undefined
+    if (!nav || !el) {
+      setIndicator(null)
+      return
+    }
+    // Rect deltas rather than offsetLeft: unambiguous regardless of how the offsetParent chain
+    // resolves, and the nav has no border so its border box and padding box share a left edge.
+    const navBox = nav.getBoundingClientRect()
+    const box = el.getBoundingClientRect()
+    setIndicator({ left: box.left - navBox.left, width: box.width })
+  }, [activeTo])
+
+  useLayoutEffect(measure, [measure])
+
+  useEffect(() => {
+    if (!indicator || hasSettled) return
+    const id = requestAnimationFrame(() => setHasSettled(true))
+    return () => cancelAnimationFrame(id)
+  }, [indicator, hasSettled])
+
+  useEffect(() => {
+    const nav = navRef.current
+    if (!nav) return
+    // Label widths shift when the webfont finishes loading and when the header reflows; either
+    // would otherwise strand the pill next to its item instead of under it.
+    const observer = new ResizeObserver(measure)
+    observer.observe(nav)
+    document.fonts?.ready.then(measure).catch(() => {})
+    return () => observer.disconnect()
+  }, [measure])
 
   return (
     <div className="min-h-screen bg-canvas-light dark:bg-canvas-dark">
       <header className="glass sticky top-0 z-10 border-b">
         <div className="mx-auto flex max-w-[1800px] items-center gap-6 px-8 py-3.5">
           <span className="flex select-none items-center gap-2.5 text-[17px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
-            <svg viewBox="0 0 64 64" className="h-7 w-7" aria-hidden="true">
-              <defs>
-                <linearGradient id="nav-mark" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#0a84ff" />
-                  <stop offset="100%" stopColor="#0071e3" />
-                </linearGradient>
-              </defs>
-              <rect width="64" height="64" rx="16" fill="#0f172a" />
-              <circle cx="30" cy="30" r="18" fill="url(#nav-mark)" />
-              <circle cx="38" cy="24" r="14" fill="#0f172a" />
-            </svg>
+            <BrandMark className="h-7 w-7" />
             가계부
           </span>
 
-          <nav className="segmented">
+          <nav ref={navRef} className="segmented relative">
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none absolute inset-y-1 left-0 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-white/[0.14] ${
+                hasSettled ? 'transition-[transform,width,opacity] duration-500 ease-spring' : ''
+              } ${indicator ? 'opacity-100' : 'opacity-0'}`}
+              style={
+                indicator ? { transform: `translateX(${indicator.left}px)`, width: `${indicator.width}px` } : undefined
+              }
+            />
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.end}
-                className={({ isActive }) => `btn-ghost ${isActive ? 'btn-ghost-active' : ''}`}
+                ref={(el) => {
+                  if (el) itemRefs.current.set(item.to, el)
+                  else itemRefs.current.delete(item.to)
+                }}
+                className={({ isActive }) =>
+                  // The active item gets no background of its own — the sliding pill behind it is
+                  // the selected-state affordance, so the usual hover wash is suppressed too.
+                  `btn-ghost relative z-10 ${
+                    isActive
+                      ? 'text-accent hover:bg-transparent hover:text-accent dark:text-accent-light dark:hover:bg-transparent dark:hover:text-accent-light'
+                      : ''
+                  }`
+                }
               >
                 {item.label}
               </NavLink>
