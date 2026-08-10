@@ -58,10 +58,17 @@ export interface Subscription {
   merchant: string
   amount: number
   monthCount: number
+  typicalDay: number
 }
 
 function mean(nums: number[]): number {
   return nums.reduce((sum, n) => sum + n, 0) / nums.length
+}
+
+function median(nums: number[]): number {
+  const sorted = [...nums].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  return sorted.length % 2 === 0 ? Math.round((sorted[mid - 1] + sorted[mid]) / 2) : sorted[mid]
 }
 
 export function detectSubscriptions(transactions: Transaction[]): Subscription[] {
@@ -81,7 +88,7 @@ export function detectSubscriptions(transactions: Transaction[]): Subscription[]
 
   const groups = new Map<
     string,
-    { merchant: string; monthlyTotals: Map<string, number>; monthlyCounts: Map<string, number> }
+    { merchant: string; monthlyTotals: Map<string, number>; monthlyCounts: Map<string, number>; days: number[] }
   >()
   for (const t of spendingTx) {
     const txMonth = t.date.slice(0, 7)
@@ -90,10 +97,12 @@ export function detectSubscriptions(transactions: Transaction[]): Subscription[]
       merchant: t.content,
       monthlyTotals: new Map<string, number>(),
       monthlyCounts: new Map<string, number>(),
+      days: [],
     }
     const amount = Math.abs(t.amount)
     group.monthlyTotals.set(txMonth, (group.monthlyTotals.get(txMonth) ?? 0) + amount)
     group.monthlyCounts.set(txMonth, (group.monthlyCounts.get(txMonth) ?? 0) + 1)
+    group.days.push(Number(t.date.slice(8, 10)))
     groups.set(t.content, group)
   }
 
@@ -116,6 +125,10 @@ export function detectSubscriptions(transactions: Transaction[]): Subscription[]
       merchant: g.merchant,
       amount: Math.round(mean([...g.monthlyTotals.values()])),
       monthCount: g.monthlyTotals.size,
+      // Typical day-of-month this merchant posts (e.g. rent on the 23rd) — lets a pending
+      // subscription's known cost be placed as a step on its actual due date in the spending-pace
+      // projection, instead of smoothed evenly across the rest of the month.
+      typicalDay: median(g.days),
     }))
     .sort((a, b) => b.amount - a.amount)
 }

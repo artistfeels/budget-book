@@ -106,7 +106,7 @@ describe('detectSubscriptions', () => {
       tx({ date: '2026-06-01', content: '넷플릭스', amount: -17000 }),
       tx({ date: '2026-07-01', content: '넷플릭스', amount: -17000 }),
     ]
-    expect(detectSubscriptions(txs)).toEqual([{ merchant: '넷플릭스', amount: 17000, monthCount: 2 }])
+    expect(detectSubscriptions(txs)).toEqual([{ merchant: '넷플릭스', amount: 17000, monthCount: 2, typicalDay: 1 }])
   })
 
   it('counts every distinct month the pair appears in, not just the latest two', () => {
@@ -115,7 +115,7 @@ describe('detectSubscriptions', () => {
       tx({ date: '2026-06-01', content: '넷플릭스', amount: -17000 }),
       tx({ date: '2026-07-01', content: '넷플릭스', amount: -17000 }),
     ]
-    expect(detectSubscriptions(txs)).toEqual([{ merchant: '넷플릭스', amount: 17000, monthCount: 3 }])
+    expect(detectSubscriptions(txs)).toEqual([{ merchant: '넷플릭스', amount: 17000, monthCount: 3, typicalDay: 1 }])
   })
 
   it('excludes a one-off purchase that only appears in the latest month', () => {
@@ -124,7 +124,7 @@ describe('detectSubscriptions', () => {
       tx({ date: '2026-07-01', content: '넷플릭스', amount: -17000 }),
       tx({ date: '2026-07-15', content: '가전제품', amount: -500000 }),
     ]
-    expect(detectSubscriptions(txs)).toEqual([{ merchant: '넷플릭스', amount: 17000, monthCount: 2 }])
+    expect(detectSubscriptions(txs)).toEqual([{ merchant: '넷플릭스', amount: 17000, monthCount: 2, typicalDay: 1 }])
   })
 
   it('excludes a lapsed subscription that stopped before the latest month', () => {
@@ -146,7 +146,7 @@ describe('detectSubscriptions', () => {
       tx({ date: '2026-06-01', content: '통신비', amount: -50000 }),
       tx({ date: '2026-07-01', content: '통신비', amount: -55000 }), // usage varied — amount isn't identical
     ]
-    expect(detectSubscriptions(txs)).toEqual([{ merchant: '통신비', amount: 52500, monthCount: 2 }])
+    expect(detectSubscriptions(txs)).toEqual([{ merchant: '통신비', amount: 52500, monthCount: 2, typicalDay: 1 }])
   })
 
   it('tolerates one skipped month within a trailing 4-month window', () => {
@@ -156,7 +156,7 @@ describe('detectSubscriptions', () => {
       // 2026-06 skipped (e.g. late payment recorded oddly) — still present in 3 of the last 4 months
       tx({ date: '2026-07-01', content: '월세', amount: -700000 }),
     ]
-    expect(detectSubscriptions(txs)).toEqual([{ merchant: '월세', amount: 700000, monthCount: 3 }])
+    expect(detectSubscriptions(txs)).toEqual([{ merchant: '월세', amount: 700000, monthCount: 3, typicalDay: 1 }])
   })
 
   it('excludes a merchant present in fewer than 3 of the trailing 4 months', () => {
@@ -194,7 +194,17 @@ describe('detectSubscriptions', () => {
       tx({ date: '2026-06-15', content: '넷플릭스', amount: -8500 }), // billed twice this month
       tx({ date: '2026-07-01', content: '넷플릭스', amount: -17000 }),
     ]
-    expect(detectSubscriptions(txs)).toEqual([{ merchant: '넷플릭스', amount: 17000, monthCount: 2 }])
+    expect(detectSubscriptions(txs)).toEqual([{ merchant: '넷플릭스', amount: 17000, monthCount: 2, typicalDay: 1 }])
+  })
+
+  it('computes typicalDay as the median posting day across qualifying months', () => {
+    const txs = [
+      tx({ date: '2026-05-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-06-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-07-23', content: '월세', amount: -700000 }),
+      tx({ date: '2026-08-01', content: '편의점', amount: -3000 }), // establishes August as the latest month
+    ]
+    expect(detectSubscriptions(txs)).toEqual([{ merchant: '월세', amount: 700000, monthCount: 3, typicalDay: 23 }])
   })
 
   it('still detects a subscription when the latest month is barely started and this cycle\'s bill has not posted yet', () => {

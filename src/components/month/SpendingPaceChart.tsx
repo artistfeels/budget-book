@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { spendingPaceSeries } from '../../lib/monthDetailAggregations'
+import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { applyPendingCostFloor, spendingPaceSeries } from '../../lib/monthDetailAggregations'
 import { detectSubscriptions } from '../../lib/analyticsAggregations'
 import { formatKRW } from '../../lib/format'
 import type { Transaction } from '../../types/transaction'
@@ -43,24 +43,14 @@ export default function SpendingPaceChart({ transactions, month }: SpendingPaceC
   )
 
   const isMonthInProgress = clampedAsOfDay < daysInMonth
-  const actualSoFar = result.points[clampedAsOfDay - 1]?.thisMonth ?? 0
-  const projectedTotal = isMonthInProgress
-    ? Math.max(result.projectedMonthEndTotal, actualSoFar + pendingTotal)
-    : result.projectedMonthEndTotal
-  const floorGap = projectedTotal - result.projectedMonthEndTotal
 
-  // Keep the projected LINE consistent with the headline total above: ramp the gap between the
-  // statistical projection and the subscription floor in smoothly across the remaining days,
-  // instead of only correcting the summary number while the chart line still ends somewhere else.
-  const chartPoints = useMemo(() => {
-    if (floorGap <= 0) return result.points
-    const remainingDays = daysInMonth - clampedAsOfDay
-    return result.points.map((p) => {
-      if (p.thisMonthProjected === null) return p
-      const rampFraction = remainingDays > 0 ? (p.day - clampedAsOfDay) / remainingDays : 1
-      return { ...p, thisMonthProjected: p.thisMonthProjected + floorGap * rampFraction }
-    })
-  }, [result.points, floorGap, clampedAsOfDay, daysInMonth])
+  // Keep the projected LINE consistent with the headline total: a pending subscription's known
+  // amount lands as a step exactly on its typical due date (e.g. rent on the 23rd), not smoothed
+  // evenly across the remaining days.
+  const { points: chartPoints, projectedMonthEndTotal: projectedTotal } = useMemo(
+    () => applyPendingCostFloor(result.points, clampedAsOfDay, daysInMonth, pendingSubscriptions),
+    [result.points, clampedAsOfDay, daysInMonth, pendingSubscriptions]
+  )
 
   const isFaster = (result.percentVsLastMonthSameDay ?? 0) > 0
 
@@ -95,14 +85,15 @@ export default function SpendingPaceChart({ transactions, month }: SpendingPaceC
             formatter={(value: any) => (value === null ? '-' : formatKRW(value))}
             labelFormatter={(day) => `${day}일`}
           />
-          <Line type="monotone" dataKey="threeMonthAvg" name="최근 3개월 평균" stroke="#cbd5e1" strokeWidth={1.5} dot={false} />
-          <Line type="monotone" dataKey="lastMonth" name="지난달" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="4 3" dot={false} />
-          <Line type="monotone" dataKey="thisMonth" name="이번 달" stroke="#e11d48" strokeWidth={2.5} dot={false} />
+          <Legend wrapperStyle={{ fontSize: 12 }} />
+          <Line type="monotone" dataKey="threeMonthAvg" name="최근 3개월 평균" stroke="#2a78d6" strokeWidth={1.5} dot={false} />
+          <Line type="monotone" dataKey="lastMonth" name="지난달" stroke="#eb6834" strokeWidth={1.5} strokeDasharray="4 3" dot={false} />
+          <Line type="monotone" dataKey="thisMonth" name="이번 달" stroke="#1baf7a" strokeWidth={2.5} dot={false} />
           <Line
             type="monotone"
             dataKey="thisMonthProjected"
             name="이번 달 예상"
-            stroke="#e11d48"
+            stroke="#1baf7a"
             strokeWidth={1.5}
             strokeDasharray="5 3"
             dot={false}

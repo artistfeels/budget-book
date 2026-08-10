@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { dailySummaries, monthInfographics, spendingPaceSeries, weeklySpendingBands } from './monthDetailAggregations'
+import {
+  applyPendingCostFloor,
+  dailySummaries,
+  monthInfographics,
+  spendingPaceSeries,
+  weeklySpendingBands,
+  type SpendingPacePoint,
+} from './monthDetailAggregations'
 import type { Transaction } from '../types/transaction'
 
 function tx(overrides: Partial<Transaction>): Transaction {
@@ -227,6 +234,65 @@ describe('spendingPaceSeries', () => {
     // Unclamped scale would be 500000/10000 = 50x, projecting into the millions. Clamped to 3x:
     // 500000 + (710000 - 10000) * 3 = 2,600,000.
     expect(result.projectedMonthEndTotal).toBeCloseTo(2600000)
+  })
+})
+
+describe('applyPendingCostFloor', () => {
+  function buildPoints(
+    daysInMonth: number,
+    asOfDay: number,
+    actualSoFar: number,
+    baseProjectedEnd: number
+  ): SpendingPacePoint[] {
+    const points: SpendingPacePoint[] = []
+    for (let day = 1; day <= daysInMonth; day++) {
+      points.push({
+        day,
+        thisMonth: day <= asOfDay ? actualSoFar : null,
+        // Mirrors spendingPaceSeries: the projected series starts AT asOfDay (not the day after),
+        // so day === asOfDay carries both the actual value and a (matching) projected value.
+        thisMonthProjected: day >= asOfDay ? baseProjectedEnd : null,
+        lastMonth: null,
+        threeMonthAvg: null,
+      })
+    }
+    return points
+  }
+
+  it('applies a pending cost as a step exactly on its typical due day, not smoothed across the remaining days', () => {
+    const points = buildPoints(30, 10, 100000, 100000)
+    const result = applyPendingCostFloor(points, 10, 30, [{ amount: 900000, typicalDay: 23 }])
+    expect(result.points[21].thisMonthProjected).toBe(100000) // day 22: still before the due day
+    expect(result.points[22].thisMonthProjected).toBe(1000000) // day 23: full 900k lands at once
+    expect(result.points[29].thisMonthProjected).toBe(1000000) // month-end holds the step
+    expect(result.projectedMonthEndTotal).toBe(1000000)
+  })
+
+  it('pulls an overdue due day (already passed without posting) forward to the next forecastable day', () => {
+    const points = buildPoints(30, 10, 100000, 100000)
+    const result = applyPendingCostFloor(points, 10, 30, [{ amount: 900000, typicalDay: 5 }])
+    expect(result.points[9].thisMonthProjected).toBe(100000) // day 10 (asOfDay): due day hasn't arrived yet
+    expect(result.points[10].thisMonthProjected).toBe(1000000) // day 11: pulled forward from the missed day 5
+  })
+
+  it('returns the base projection unchanged when there are no pending costs', () => {
+    const points = buildPoints(30, 10, 100000, 250000)
+    const result = applyPendingCostFloor(points, 10, 30, [])
+    expect(result.projectedMonthEndTotal).toBe(250000)
+    expect(result.points).toBe(points)
+  })
+
+  it('leaves the projection alone when the statistical projection already exceeds the pending-cost floor', () => {
+    const points = buildPoints(30, 10, 100000, 2000000)
+    const result = applyPendingCostFloor(points, 10, 30, [{ amount: 900000, typicalDay: 23 }])
+    expect(result.projectedMonthEndTotal).toBe(2000000)
+    expect(result.points).toBe(points)
+  })
+
+  it('returns the base projection unchanged once the month has fully elapsed', () => {
+    const points = buildPoints(30, 30, 500000, 500000)
+    const result = applyPendingCostFloor(points, 30, 30, [{ amount: 900000, typicalDay: 23 }])
+    expect(result.projectedMonthEndTotal).toBe(500000)
   })
 })
 
