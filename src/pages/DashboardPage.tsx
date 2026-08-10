@@ -49,10 +49,18 @@ export default function DashboardPage() {
     return { income, spending, saving, netCashFlow, savingsRate }
   }, [summariesInPeriod])
 
-  const previousMonth = useMemo(() => {
-    const lastTwo = monthlySummaries.slice(-2)
-    return lastTwo.length === 2 ? lastTwo[0] : undefined
-  }, [monthlySummaries])
+  const previousTotals = useMemo(() => {
+    const count = PERIOD_OPTIONS.find((p) => p.value === period)?.months ?? 12
+    const currentStartIndex = availableMonths.length - selectedMonths.length
+    const previousMonths = availableMonths.slice(Math.max(0, currentStartIndex - count), currentStartIndex)
+    if (previousMonths.length === 0) return null
+    const summaries = monthlySummaries.filter((s) => previousMonths.includes(s.month))
+    return {
+      income: summaries.reduce((sum, s) => sum + s.income, 0),
+      spending: summaries.reduce((sum, s) => sum + s.spending, 0),
+      saving: summaries.reduce((sum, s) => sum + s.saving, 0),
+    }
+  }, [availableMonths, monthlySummaries, selectedMonths, period])
 
   return (
     <div>
@@ -79,9 +87,9 @@ export default function DashboardPage() {
         saving={totals.saving}
         netCashFlow={totals.netCashFlow}
         savingsRate={totals.savingsRate}
-        previousIncome={previousMonth ? previousMonth.income : null}
-        previousSpending={previousMonth ? previousMonth.spending : null}
-        previousSaving={previousMonth ? previousMonth.saving : null}
+        previousIncome={previousTotals ? previousTotals.income : null}
+        previousSpending={previousTotals ? previousTotals.spending : null}
+        previousSaving={previousTotals ? previousTotals.saving : null}
         compact={compact}
         onToggleCompact={() => setCompact((c) => !c)}
       />
