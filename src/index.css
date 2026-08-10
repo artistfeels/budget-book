@@ -6,8 +6,9 @@ body {
   font-family: 'Pretendard', system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
-    color-scheme: dark;
-  }
+/* Tied to the app's own light/dark/system selection (the `dark` class on <html>), not the OS
+   media query directly — otherwise native form controls (input, select) can render with dark
+   browser-default colors while the rest of the app is still light-themed, or vice versa. */
+:root.dark {
+  color-scheme: dark;
 }
