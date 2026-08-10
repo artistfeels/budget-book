@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { applyPendingCostFloor, spendingPaceSeries } from '../../lib/monthDetailAggregations'
+import { blendSubscriptionProjection, spendingPaceSeries } from '../../lib/monthDetailAggregations'
 import { detectSubscriptions } from '../../lib/analyticsAggregations'
 import { formatKRW } from '../../lib/format'
 import type { Transaction } from '../../types/transaction'
@@ -23,12 +23,23 @@ export default function SpendingPaceChart({ transactions, month }: SpendingPaceC
   const result = useMemo(() => spendingPaceSeries(transactions, month, asOfDay), [transactions, month, asOfDay])
   const clampedAsOfDay = result.asOfDay
 
-  // Detected recurring merchants that haven't posted this month yet are a near-certain remaining
-  // cost (e.g. rent due on the 23rd) — use their known amount as a floor under the statistical
-  // projection so a quiet start to the month can't make the estimate implausibly low. Merchant-
-  // level (not category-level) on purpose: a category-wide check flagged almost every category
-  // with any 2-of-3-month history as "pending", which is most categories for a normal spender.
+  // Detected recurring merchants (subscriptions/bills) are excluded from the pace-scaled
+  // statistical projection entirely — a fixed cost like rent shouldn't shrink just because this
+  // month started quiet on coffee runs — and instead layered back on separately as a flat,
+  // unscaled amount. Merchant-level (not category-level) detection on purpose: a category-wide
+  // check flagged almost every category with any 2-of-3-month history as "pending", which is most
+  // categories for a normal spender.
   const subscriptions = useMemo(() => detectSubscriptions(transactions), [transactions])
+  const subscriptionMerchants = useMemo(() => new Set(subscriptions.map((s) => s.merchant)), [subscriptions])
+  const nonSubscriptionTransactions = useMemo(
+    () => transactions.filter((t) => !subscriptionMerchants.has(t.content)),
+    [transactions, subscriptionMerchants]
+  )
+  const nonSubResult = useMemo(
+    () => spendingPaceSeries(nonSubscriptionTransactions, month, asOfDay),
+    [nonSubscriptionTransactions, month, asOfDay]
+  )
+
   const monthMerchants = useMemo(
     () => new Set(transactions.filter((t) => t.date.slice(0, 7) === month).map((t) => t.content)),
     [transactions, month]
@@ -41,15 +52,25 @@ export default function SpendingPaceChart({ transactions, month }: SpendingPaceC
     () => pendingSubscriptions.reduce((sum, s) => sum + s.amount, 0),
     [pendingSubscriptions]
   )
+  // Subscriptions that already posted this month are stripped out of nonSubResult's actual-so-far
+  // too — this recovers exactly how much of the real total they account for, so it can be added
+  // back as a flat offset instead of being subjected to pace scaling.
+  const postedSubscriptionTotal =
+    (result.points[clampedAsOfDay - 1]?.thisMonth ?? 0) - (nonSubResult.points[clampedAsOfDay - 1]?.thisMonth ?? 0)
 
   const isMonthInProgress = clampedAsOfDay < daysInMonth
 
-  // Keep the projected LINE consistent with the headline total: a pending subscription's known
-  // amount lands as a step exactly on its typical due date (e.g. rent on the 23rd), not smoothed
-  // evenly across the remaining days.
   const { points: chartPoints, projectedMonthEndTotal: projectedTotal } = useMemo(
-    () => applyPendingCostFloor(result.points, clampedAsOfDay, daysInMonth, pendingSubscriptions),
-    [result.points, clampedAsOfDay, daysInMonth, pendingSubscriptions]
+    () =>
+      blendSubscriptionProjection(
+        result.points,
+        nonSubResult.points,
+        clampedAsOfDay,
+        daysInMonth,
+        postedSubscriptionTotal,
+        pendingSubscriptions
+      ),
+    [result.points, nonSubResult.points, clampedAsOfDay, daysInMonth, postedSubscriptionTotal, pendingSubscriptions]
   )
 
   const isFaster = (result.percentVsLastMonthSameDay ?? 0) > 0

@@ -187,44 +187,43 @@ export interface PendingCost {
   typicalDay: number
 }
 
-// A detected recurring cost that hasn't posted yet this month (e.g. rent due on the 23rd) is a
-// near-certain future jump, not a gradual drift — so blend it into the projected line as a step
-// on its own typical due date, not smoothed evenly across the rest of the month. The month-end
-// total this produces is identical to a flat floor (actual-so-far + all pending costs, whichever
-// is higher than the statistical projection); only *where in the month* the increase appears changes.
-export function applyPendingCostFloor(
-  points: SpendingPacePoint[],
+// Recurring fixed costs (rent, subscriptions) don't scale with how much variable spending
+// (coffee, groceries) has happened this month, but the pace-scaled statistical projection would
+// otherwise treat them that way — a slow start on incidentals shrinks the `scale` factor, which
+// shrinks the historical rent spike baked into the 3-month-average shape right along with it, so
+// a 900k rent charge can show up as a 400-500k projected bump instead. Keeping the two fully
+// separate fixes this: `nonSubscriptionPoints` must come from spendingPaceSeries run over
+// transactions with subscription merchants filtered OUT, so its `thisMonthProjected` is a pace
+// projection of ONLY variable spending. Each subscription's own known amount is then layered on
+// top as a flat, unscaled step — a merchant that already posted this month contributes a constant
+// offset (postedSubscriptionTotal) from day one; a merchant still pending contributes its full
+// amount as a step exactly on its typical due day, not scaled by pace and not smoothed.
+export function blendSubscriptionProjection(
+  fullPoints: SpendingPacePoint[],
+  nonSubscriptionPoints: SpendingPacePoint[],
   asOfDay: number,
   daysInMonth: number,
+  postedSubscriptionTotal: number,
   pendingCosts: PendingCost[]
 ): { points: SpendingPacePoint[]; projectedMonthEndTotal: number } {
-  const baseProjectedEnd = points[daysInMonth - 1]?.thisMonthProjected ?? 0
-  const pendingTotal = pendingCosts.reduce((sum, c) => sum + c.amount, 0)
-  if (pendingCosts.length === 0 || asOfDay >= daysInMonth) {
-    return { points, projectedMonthEndTotal: baseProjectedEnd }
-  }
-
-  const actualSoFar = points[asOfDay - 1]?.thisMonth ?? 0
-  const floorEnd = actualSoFar + pendingTotal
-  const floorGap = floorEnd - baseProjectedEnd
-  if (floorGap <= 0) {
-    return { points, projectedMonthEndTotal: baseProjectedEnd }
-  }
-
   // A due date that's already passed without posting is overdue, not still "on" its old date —
   // pull it forward to the next forecastable day so its full amount still lands somewhere.
   const dueDays = pendingCosts
     .map((c) => ({ amount: c.amount, day: Math.min(Math.max(c.typicalDay, asOfDay + 1), daysInMonth) }))
     .sort((a, b) => a.day - b.day)
 
-  const steppedPoints = points.map((p) => {
-    if (p.thisMonthProjected === null) return p
+  const points = fullPoints.map((p, i) => {
+    const nonSubProjected = nonSubscriptionPoints[i]?.thisMonthProjected
+    if (nonSubProjected === null || nonSubProjected === undefined) return p
     const dueSoFar = dueDays.filter((d) => d.day <= p.day).reduce((sum, d) => sum + d.amount, 0)
-    const stepFraction = dueSoFar / pendingTotal
-    return { ...p, thisMonthProjected: p.thisMonthProjected + floorGap * stepFraction }
+    return { ...p, thisMonthProjected: nonSubProjected + postedSubscriptionTotal + dueSoFar }
   })
 
-  return { points: steppedPoints, projectedMonthEndTotal: floorEnd }
+  const pendingTotal = pendingCosts.reduce((sum, c) => sum + c.amount, 0)
+  const projectedMonthEndTotal =
+    (nonSubscriptionPoints[daysInMonth - 1]?.thisMonthProjected ?? 0) + postedSubscriptionTotal + pendingTotal
+
+  return { points, projectedMonthEndTotal }
 }
 
 export interface MonthInfographics {

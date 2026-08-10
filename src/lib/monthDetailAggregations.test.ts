@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  applyPendingCostFloor,
+  blendSubscriptionProjection,
   dailySummaries,
   monthInfographics,
   spendingPaceSeries,
@@ -237,21 +237,14 @@ describe('spendingPaceSeries', () => {
   })
 })
 
-describe('applyPendingCostFloor', () => {
-  function buildPoints(
-    daysInMonth: number,
-    asOfDay: number,
-    actualSoFar: number,
-    baseProjectedEnd: number
-  ): SpendingPacePoint[] {
+describe('blendSubscriptionProjection', () => {
+  function buildFullPoints(daysInMonth: number, asOfDay: number, actualSoFar: number): SpendingPacePoint[] {
     const points: SpendingPacePoint[] = []
     for (let day = 1; day <= daysInMonth; day++) {
       points.push({
         day,
         thisMonth: day <= asOfDay ? actualSoFar : null,
-        // Mirrors spendingPaceSeries: the projected series starts AT asOfDay (not the day after),
-        // so day === asOfDay carries both the actual value and a (matching) projected value.
-        thisMonthProjected: day >= asOfDay ? baseProjectedEnd : null,
+        thisMonthProjected: null, // untouched by blendSubscriptionProjection — only thisMonth/day are read
         lastMonth: null,
         threeMonthAvg: null,
       })
@@ -259,40 +252,68 @@ describe('applyPendingCostFloor', () => {
     return points
   }
 
-  it('applies a pending cost as a step exactly on its typical due day, not smoothed across the remaining days', () => {
-    const points = buildPoints(30, 10, 100000, 100000)
-    const result = applyPendingCostFloor(points, 10, 30, [{ amount: 900000, typicalDay: 23 }])
-    expect(result.points[21].thisMonthProjected).toBe(100000) // day 22: still before the due day
-    expect(result.points[22].thisMonthProjected).toBe(1000000) // day 23: full 900k lands at once
-    expect(result.points[29].thisMonthProjected).toBe(1000000) // month-end holds the step
-    expect(result.projectedMonthEndTotal).toBe(1000000)
+  function buildNonSubPoints(
+    daysInMonth: number,
+    asOfDay: number,
+    actualSoFar: number,
+    projectedFn: (day: number) => number
+  ): SpendingPacePoint[] {
+    const points: SpendingPacePoint[] = []
+    for (let day = 1; day <= daysInMonth; day++) {
+      points.push({
+        day,
+        thisMonth: day <= asOfDay ? actualSoFar : null,
+        // Mirrors spendingPaceSeries: the projected series starts AT asOfDay, so day === asOfDay
+        // carries a projected value too (matching the actual at that point).
+        thisMonthProjected: day >= asOfDay ? projectedFn(day) : null,
+        lastMonth: null,
+        threeMonthAvg: null,
+      })
+    }
+    return points
+  }
+
+  it('adds an already-posted subscription back as a flat offset, on top of the untouched non-subscription pace', () => {
+    const full = buildFullPoints(30, 10, 400000) // 400k actual so far, including a subscription that already posted
+    const nonSub = buildNonSubPoints(30, 10, 100000, () => 100000) // subscription-free baseline: flat, no growth
+    const result = blendSubscriptionProjection(full, nonSub, 10, 30, 300000, [])
+    expect(result.points[9].thisMonthProjected).toBe(400000) // day 10 (asOfDay): 100000 + 300000 posted offset
+    expect(result.points[29].thisMonthProjected).toBe(400000) // flat baseline stays flat once the offset is added
+    expect(result.projectedMonthEndTotal).toBe(400000)
+  })
+
+  it('adds a pending cost as a full step exactly on its typical due day, undiluted by the pace-scaled baseline', () => {
+    const full = buildFullPoints(30, 10, 50000)
+    const nonSub = buildNonSubPoints(30, 10, 50000, () => 50000) // flat — a slow-paced baseline that must NOT shrink the rent step
+    const result = blendSubscriptionProjection(full, nonSub, 10, 30, 0, [{ amount: 900000, typicalDay: 23 }])
+    expect(result.points[21].thisMonthProjected).toBe(50000) // day 22: still before the due day
+    expect(result.points[22].thisMonthProjected).toBe(950000) // day 23: the full 900k lands at once
+    expect(result.points[29].thisMonthProjected).toBe(950000)
+    expect(result.projectedMonthEndTotal).toBe(950000)
   })
 
   it('pulls an overdue due day (already passed without posting) forward to the next forecastable day', () => {
-    const points = buildPoints(30, 10, 100000, 100000)
-    const result = applyPendingCostFloor(points, 10, 30, [{ amount: 900000, typicalDay: 5 }])
-    expect(result.points[9].thisMonthProjected).toBe(100000) // day 10 (asOfDay): due day hasn't arrived yet
-    expect(result.points[10].thisMonthProjected).toBe(1000000) // day 11: pulled forward from the missed day 5
+    const full = buildFullPoints(30, 10, 50000)
+    const nonSub = buildNonSubPoints(30, 10, 50000, () => 50000)
+    const result = blendSubscriptionProjection(full, nonSub, 10, 30, 0, [{ amount: 900000, typicalDay: 5 }])
+    expect(result.points[9].thisMonthProjected).toBe(50000) // day 10 (asOfDay): due day hasn't arrived yet
+    expect(result.points[10].thisMonthProjected).toBe(950000) // day 11: pulled forward from the missed day 5
   })
 
-  it('returns the base projection unchanged when there are no pending costs', () => {
-    const points = buildPoints(30, 10, 100000, 250000)
-    const result = applyPendingCostFloor(points, 10, 30, [])
-    expect(result.projectedMonthEndTotal).toBe(250000)
-    expect(result.points).toBe(points)
+  it('combines the posted offset and pending step for the month-end total', () => {
+    const full = buildFullPoints(30, 10, 300000)
+    const nonSub = buildNonSubPoints(30, 10, 100000, (day) => 100000 + (day - 10) * 5000) // grows with pace
+    const result = blendSubscriptionProjection(full, nonSub, 10, 30, 100000, [{ amount: 900000, typicalDay: 25 }])
+    const nonSubMonthEnd = 100000 + (30 - 10) * 5000
+    expect(result.projectedMonthEndTotal).toBe(nonSubMonthEnd + 100000 + 900000)
   })
 
-  it('leaves the projection alone when the statistical projection already exceeds the pending-cost floor', () => {
-    const points = buildPoints(30, 10, 100000, 2000000)
-    const result = applyPendingCostFloor(points, 10, 30, [{ amount: 900000, typicalDay: 23 }])
-    expect(result.projectedMonthEndTotal).toBe(2000000)
-    expect(result.points).toBe(points)
-  })
-
-  it('returns the base projection unchanged once the month has fully elapsed', () => {
-    const points = buildPoints(30, 30, 500000, 500000)
-    const result = applyPendingCostFloor(points, 30, 30, [{ amount: 900000, typicalDay: 23 }])
-    expect(result.projectedMonthEndTotal).toBe(500000)
+  it('leaves days before asOfDay untouched (still actual, still no projected value)', () => {
+    const full = buildFullPoints(30, 10, 400000)
+    const nonSub = buildNonSubPoints(30, 10, 100000, () => 100000)
+    const result = blendSubscriptionProjection(full, nonSub, 10, 30, 300000, [])
+    expect(result.points[4].thisMonth).toBe(400000) // day 5
+    expect(result.points[4].thisMonthProjected).toBeNull()
   })
 })
 
