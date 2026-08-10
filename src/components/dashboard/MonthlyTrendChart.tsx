@@ -11,10 +11,10 @@ interface MonthlyTrendChartProps {
 
 export default function MonthlyTrendChart({ summaries, onSelectMonth }: MonthlyTrendChartProps) {
   // income and spending+saving are separate bars (the latter stacked), so the tallest bar is
-  // whichever of the two is bigger; netCashFlow is an unstacked line that can dip below zero.
+  // whichever of the two is bigger. The axis intentionally starts at 0, not at netCashFlow's
+  // minimum — this dashboard reads as a magnitude comparison, not a signed range.
   const yAxisMax = Math.max(0, ...summaries.flatMap((s) => [s.income, s.spending + s.saving, s.netCashFlow]))
-  const yAxisMin = Math.min(0, ...summaries.map((s) => s.netCashFlow))
-  const yAxisTicks = niceAxisTicks(yAxisMax, yAxisMin)
+  const yAxisTicks = niceAxisTicks(yAxisMax)
   const theme = useChartTheme()
 
   return (

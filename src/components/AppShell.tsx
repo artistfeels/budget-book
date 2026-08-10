@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
+import ThemeToggle from './ThemeToggle'
 
 const navItems = [
   { to: '/', label: '대시보드', end: true },
@@ -22,7 +23,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             </svg>
             가계부
           </span>
-          <nav className="flex gap-1">
+          <nav className="flex flex-1 gap-1">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -45,6 +46,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
               </NavLink>
             ))}
           </nav>
+          <ThemeToggle />
         </div>
       </header>
       <main className="mx-auto max-w-[1800px] px-8 py-8">{children}</main>

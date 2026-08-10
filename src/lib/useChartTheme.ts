@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useThemeStore } from '../store/useThemeStore'
 
 export interface ChartTheme {
   grid: string
@@ -28,21 +28,10 @@ const DARK: ChartTheme = {
 }
 
 // Recharts (and any other inline-styled, non-Tailwind color) needs an explicit JS-side dark-mode
-// switch rather than a `dark:` variant. Centralized here so every consumer reads from the same
-// live-updating flag instead of re-deriving its own one-off matchMedia check.
+// switch rather than a `dark:` variant. Reads from the same resolved flag the user's light/dark/
+// system selection (useThemeStore) drives, so chart colors always agree with the Tailwind classes.
 export function useIsDark(): boolean {
-  const [isDark, setIsDark] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
-  )
-
-  useEffect(() => {
-    const mql = window.matchMedia('(prefers-color-scheme: dark)')
-    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches)
-    mql.addEventListener('change', handler)
-    return () => mql.removeEventListener('change', handler)
-  }, [])
-
-  return isDark
+  return useThemeStore((s) => s.isDark)
 }
 
 export function useChartTheme(): ChartTheme {
