@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import ThemeToggle from './ThemeToggle'
 
 const navItems = [
@@ -11,45 +11,51 @@ const navItems = [
 ]
 
 export default function AppShell({ children }: { children: ReactNode }) {
+  // Keying <main> on the pathname remounts it per route, which re-runs the children's entrance
+  // animations — so navigating feels like the new page assembles rather than snapping in.
+  const { pathname } = useLocation()
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
-        <div className="mx-auto flex max-w-[1800px] items-center gap-6 px-8 py-4">
-          <span className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-800 dark:text-slate-50">
-            <svg viewBox="0 0 64 64" className="h-6 w-6" aria-hidden="true">
+    <div className="min-h-screen bg-canvas-light dark:bg-canvas-dark">
+      <header className="glass sticky top-0 z-10 border-b">
+        <div className="mx-auto flex max-w-[1800px] items-center gap-6 px-8 py-3.5">
+          <span className="flex select-none items-center gap-2.5 text-[17px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
+            <svg viewBox="0 0 64 64" className="h-7 w-7" aria-hidden="true">
+              <defs>
+                <linearGradient id="nav-mark" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#0a84ff" />
+                  <stop offset="100%" stopColor="#0071e3" />
+                </linearGradient>
+              </defs>
               <rect width="64" height="64" rx="16" fill="#0f172a" />
-              <circle cx="30" cy="30" r="18" fill="#0ea5e9" />
+              <circle cx="30" cy="30" r="18" fill="url(#nav-mark)" />
               <circle cx="38" cy="24" r="14" fill="#0f172a" />
             </svg>
             가계부
           </span>
-          <nav className="flex flex-1 gap-1">
+
+          <nav className="segmented">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.end}
-                className={({ isActive }) =>
-                  `relative rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'text-accent'
-                      : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100'
-                  }`
-                }
+                className={({ isActive }) => `btn-ghost ${isActive ? 'btn-ghost-active' : ''}`}
               >
-                {({ isActive }) => (
-                  <>
-                    {item.label}
-                    {isActive && <span className="absolute inset-x-3 -bottom-[17px] h-0.5 rounded-full bg-accent" />}
-                  </>
-                )}
+                {item.label}
               </NavLink>
             ))}
           </nav>
-          <ThemeToggle />
+
+          <div className="ml-auto">
+            <ThemeToggle />
+          </div>
         </div>
       </header>
-      <main className="mx-auto max-w-[1800px] px-8 py-8">{children}</main>
+
+      <main key={pathname} className="mx-auto max-w-[1800px] px-8 py-10">
+        {children}
+      </main>
     </div>
   )
 }

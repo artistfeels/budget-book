@@ -15,8 +15,8 @@ export default function PaymentMethodPie({ transactions }: PaymentMethodPieProps
   const theme = useChartTheme()
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-      <p className="mb-4 font-medium text-slate-700 dark:text-slate-200">결제수단별 지출 비중</p>
+    <div className="card animate-fade-up p-6">
+      <p className="card-title mb-5">결제수단별 지출 비중</p>
       <ResponsiveContainer width="100%" height={240}>
         <PieChart>
           <Pie data={items} dataKey="amount" nameKey="label" outerRadius={90} label={(entry) => entry.label}>

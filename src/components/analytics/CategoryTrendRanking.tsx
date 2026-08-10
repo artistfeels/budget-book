@@ -16,11 +16,11 @@ export default function CategoryTrendRanking({ transactions, month }: CategoryTr
     .slice(0, 3)
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-      <p className="mb-4 font-medium text-slate-700 dark:text-slate-200">카테고리 증감 랭킹 ({month} 기준, 직전 3개월 평균 대비)</p>
+    <div className="card animate-fade-up p-6">
+      <p className="card-title mb-5">카테고리 증감 랭킹 ({month} 기준, 직전 3개월 평균 대비)</p>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
-          <p className="mb-2 text-xs font-medium text-rose-600">증가</p>
+          <p className="mb-2 text-xs font-medium text-spending">증가</p>
           {increases.length === 0 ? (
             <p className="text-sm text-slate-400 dark:text-slate-500">증가한 카테고리가 없어요.</p>
           ) : (
@@ -28,14 +28,14 @@ export default function CategoryTrendRanking({ transactions, month }: CategoryTr
               {increases.map((t) => (
                 <li key={t.category} className="flex items-center justify-between text-sm">
                   <span className="text-slate-700 dark:text-slate-200">{t.category}</span>
-                  <span className="text-rose-600">+{formatKRW(t.changeAmount)}</span>
+                  <span className="text-spending">+{formatKRW(t.changeAmount)}</span>
                 </li>
               ))}
             </ul>
           )}
         </div>
         <div>
-          <p className="mb-2 text-xs font-medium text-blue-600">감소</p>
+          <p className="mb-2 text-xs font-medium text-income">감소</p>
           {decreases.length === 0 ? (
             <p className="text-sm text-slate-400 dark:text-slate-500">감소한 카테고리가 없어요.</p>
           ) : (
@@ -43,7 +43,7 @@ export default function CategoryTrendRanking({ transactions, month }: CategoryTr
               {decreases.map((t) => (
                 <li key={t.category} className="flex items-center justify-between text-sm">
                   <span className="text-slate-700 dark:text-slate-200">{t.category}</span>
-                  <span className="text-blue-600">{formatKRW(t.changeAmount)}</span>
+                  <span className="text-income">{formatKRW(t.changeAmount)}</span>
                 </li>
               ))}
             </ul>

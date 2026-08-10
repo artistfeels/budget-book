@@ -58,7 +58,7 @@ export default function AnalyticsPage() {
 
   if (!month) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-6 text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:shadow-none">
+      <div className="card animate-fade-up p-6 text-slate-500 dark:text-slate-400">
         불러온 데이터가 없습니다. 먼저 데이터를 불러와주세요.
       </div>
     )
@@ -66,30 +66,23 @@ export default function AnalyticsPage() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-50">분석</h1>
-        <div className="flex flex-wrap items-center gap-3">
-          <select
-            value={month}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-          >
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="page-title animate-fade-up">분석</h1>
+        <div className="animate-fade-up stagger-1 flex flex-wrap items-center gap-3">
+          <select value={month} onChange={(e) => setSelectedMonth(e.target.value)} className="field font-medium">
             {[...availableMonths].reverse().map((m) => (
               <option key={m} value={m}>
                 {m}
               </option>
             ))}
           </select>
-          <div className="flex gap-2">
+          <div className="segmented">
             {PERIOD_OPTIONS.map((p) => (
               <button
                 key={p.value}
                 onClick={() => setPeriod(p.value)}
-                className={`rounded-lg px-4 py-1.5 text-sm font-medium ${
-                  period === p.value
-                    ? 'bg-accent text-white'
-                    : 'bg-white text-slate-500 hover:text-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
-                }`}
+                aria-pressed={period === p.value}
+                className={`btn-ghost ${period === p.value ? 'btn-ghost-active' : ''}`}
               >
                 {p.label}
               </button>

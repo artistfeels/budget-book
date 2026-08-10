@@ -15,8 +15,8 @@ export default function HourBucketChart({ transactions }: HourBucketChartProps) 
   const theme = useChartTheme()
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-      <p className="mb-4 font-medium text-slate-700 dark:text-slate-200">시간대별 지출</p>
+    <div className="card animate-fade-up p-6">
+      <p className="card-title mb-5">시간대별 지출</p>
       <ResponsiveContainer width="100%" height={240}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke={theme.grid} />

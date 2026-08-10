@@ -33,7 +33,7 @@ export default function EditableSelect({ value, options, onChange, className }: 
           if (e.key === 'Escape') setCustomMode(false)
         }}
         className={
-          className ?? 'w-full rounded border border-slate-200 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
+          className ?? 'field w-full px-2 py-1'
         }
       />
     )

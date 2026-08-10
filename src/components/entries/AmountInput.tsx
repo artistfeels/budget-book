@@ -24,7 +24,8 @@ export default function AmountInput({ value, onChange, className }: AmountInputP
           setEditing(true)
         }}
         className={
-          className ?? 'w-full rounded px-2 py-1 text-right text-sm hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-800'
+          className ??
+          'w-full rounded-lg px-2 py-1 text-right text-sm tabular-nums transition-colors duration-150 hover:bg-black/[0.04] dark:text-slate-100 dark:hover:bg-white/[0.06]'
         }
       >
         {value.toLocaleString('ko-KR')}
@@ -49,7 +50,7 @@ export default function AmountInput({ value, onChange, className }: AmountInputP
         if (e.key === 'Escape') setEditing(false)
       }}
       className={
-        className ?? 'w-full rounded border border-slate-200 px-2 py-1 text-right text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
+        className ?? 'field w-full px-2 py-1 text-right'
       }
     />
   )

@@ -15,7 +15,11 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
   }, [])
 
   if (session === undefined) {
-    return <div className="min-h-screen bg-slate-50 p-8 text-slate-500 dark:bg-slate-950 dark:text-slate-400">불러오는 중...</div>
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-canvas-light text-sm text-slate-500 dark:bg-canvas-dark dark:text-slate-400">
+        <span className="animate-fade-in">불러오는 중…</span>
+      </div>
+    )
   }
 
   if (session === null) {

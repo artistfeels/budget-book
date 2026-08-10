@@ -13,8 +13,8 @@ export default function TopMerchants({ transactions }: TopMerchantsProps) {
   const theme = useChartTheme()
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-      <p className="mb-4 font-medium text-slate-700 dark:text-slate-200">Top 10 가맹점</p>
+    <div className="card animate-fade-up p-6">
+      <p className="card-title mb-5">Top 10 가맹점</p>
       <ResponsiveContainer width="100%" height={320}>
         <BarChart data={items} layout="vertical" margin={{ left: 40 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={theme.grid} />

@@ -23,9 +23,9 @@ export default function CategoryDonut({ transactions }: CategoryDonutProps) {
   const theme = useChartTheme()
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+    <div className="card animate-fade-up p-6">
       <div className="mb-4 flex items-center justify-between">
-        <p className="font-medium text-slate-700 dark:text-slate-200">
+        <p className="card-title">
           지출 카테고리 구성 {drilldown && <span className="text-slate-400 dark:text-slate-500">/ {drilldown}</span>}
         </p>
         {drilldown && (

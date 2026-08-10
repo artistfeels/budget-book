@@ -25,15 +25,20 @@ export default function CategoryHeatmap({ transactions }: CategoryHeatmapProps) 
 
   function cellStyle(value: number) {
     if (maxAmount === 0 || value === 0) {
-      return { backgroundColor: isDark ? '#1e293b' : '#f8fafc', color: isDark ? '#94a3b8' : '#0f172a' }
+      return {
+        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+        color: isDark ? '#98989d' : '#6e6e73',
+      }
     }
     const intensity = 0.1 + (value / maxAmount) * 0.8
-    return { backgroundColor: `rgba(225, 29, 72, ${intensity})`, color: '#fff' }
+    // Text flips to white only once the cell is dark enough to need it; below that the default
+    // ink stays more readable than white-on-pale-pink.
+    return { backgroundColor: `rgba(225, 29, 72, ${intensity})`, color: intensity > 0.45 ? '#fff' : undefined }
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-      <p className="mb-4 font-medium text-slate-700 dark:text-slate-200">카테고리별 월간 히트맵</p>
+    <div className="card animate-fade-up p-6">
+      <p className="card-title mb-5">카테고리별 월간 히트맵</p>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
@@ -53,7 +58,12 @@ export default function CategoryHeatmap({ transactions }: CategoryHeatmapProps) 
                 {months.map((month) => {
                   const value = amounts[category]?.[month] ?? 0
                   return (
-                    <td key={month} className="p-2 text-center" style={cellStyle(value)} title={formatKRW(value)}>
+                    <td
+                      key={month}
+                      className="rounded-md p-2 text-center tabular-nums"
+                      style={cellStyle(value)}
+                      title={formatKRW(value)}
+                    >
                       {value > 0 ? formatKRW(value) : ''}
                     </td>
                   )

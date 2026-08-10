@@ -16,11 +16,14 @@ export default function MonthCategoryChart({ transactions, month }: MonthCategor
   const theme = useChartTheme()
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+    <div className="card animate-fade-up p-6">
       <div className="mb-4 flex items-baseline justify-between">
-        <p className="font-medium text-slate-700 dark:text-slate-200">월간 항목별 지출 ({month})</p>
+        <p className="card-title">월간 항목별 지출 ({month})</p>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          총 <span className="font-bold text-slate-800 dark:text-slate-50">{formatKRW(total)}</span>
+          총{' '}
+          <span className="font-semibold tabular-nums tracking-[-0.01em] text-slate-900 dark:text-white">
+            {formatKRW(total)}
+          </span>
         </p>
       </div>
       {items.length === 0 ? (

@@ -51,18 +51,15 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-50">대시보드</h1>
-        <div className="flex gap-2">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="page-title animate-fade-up">대시보드</h1>
+        <div className="segmented animate-fade-up stagger-1">
           {PERIOD_OPTIONS.map((p) => (
             <button
               key={p.value}
               onClick={() => setPeriod(p.value)}
-              className={`rounded-lg px-4 py-1.5 text-sm font-medium ${
-                period === p.value
-                  ? 'bg-accent text-white'
-                  : 'bg-white text-slate-500 hover:text-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
-              }`}
+              aria-pressed={period === p.value}
+              className={`btn-ghost ${period === p.value ? 'btn-ghost-active' : ''}`}
             >
               {p.label}
             </button>

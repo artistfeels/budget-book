@@ -52,7 +52,7 @@ function EditableCell({
         type="date"
         value={row.date}
         onChange={(e) => onChange('date', e.target.value)}
-        className="w-full rounded border border-slate-200 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        className="field w-full px-2 py-1"
       />
     )
   }
@@ -62,7 +62,7 @@ function EditableCell({
         type="text"
         value={row.content}
         onChange={(e) => onChange('content', e.target.value)}
-        className="w-full rounded border border-slate-200 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        className="field w-full px-2 py-1"
       />
     )
   }
@@ -101,23 +101,25 @@ export default function EntriesTable({
   const allSelected = rows.length > 0 && rows.every((r) => selectedIds.has(r.id))
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-      <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-3 text-sm font-medium text-slate-700 dark:border-slate-800 dark:text-slate-200">
-        <span>합계 ({rows.length}건)</span>
-        <span>{formatKRW(totalAmount)}</span>
+    <div className="overflow-x-auto card animate-fade-up p-6">
+      <div className="mb-4 flex items-baseline justify-between border-b border-black/[0.06] pb-4 dark:border-white/[0.07]">
+        <span className="text-sm text-slate-500 dark:text-slate-400">합계 ({rows.length}건)</span>
+        <span className="text-xl font-semibold tabular-nums tracking-[-0.02em] text-slate-900 dark:text-white">
+          {formatKRW(totalAmount)}
+        </span>
       </div>
       <div className="mb-3 flex items-center justify-between">
         <button
           onClick={onBulkDelete}
           disabled={selectedIds.size === 0}
-          className="rounded-lg bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-600 disabled:opacity-40 dark:bg-rose-950 dark:text-rose-400"
+          className="rounded-full bg-rose-500/10 px-4 py-1.5 text-sm font-medium text-rose-600 transition-all duration-200 ease-spring hover:bg-rose-500/20 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 dark:text-rose-400"
         >
           선택 삭제 ({selectedIds.size})
         </button>
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-200 text-left text-slate-500 dark:border-slate-800 dark:text-slate-400">
+          <tr className="border-b border-black/[0.06] text-left text-slate-500 dark:border-white/[0.07] dark:text-slate-400">
             <th className="w-8 pb-2">
               <input type="checkbox" checked={allSelected} onChange={onToggleSelectAll} />
             </th>
@@ -140,7 +142,10 @@ export default function EntriesTable({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.id} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
+            <tr
+              key={row.id}
+              className="border-b border-black/[0.04] transition-colors duration-150 last:border-0 hover:bg-black/[0.02] dark:border-white/[0.05] dark:hover:bg-white/[0.03]"
+            >
               <td className="py-1.5">
                 <input type="checkbox" checked={selectedIds.has(row.id)} onChange={() => onToggleSelect(row.id)} />
               </td>
@@ -171,7 +176,7 @@ export default function EntriesTable({
           ))}
 
           {draftRow && (
-            <tr className="border-b border-slate-100 bg-blue-50/40 last:border-0 dark:border-slate-800 dark:bg-blue-950/20">
+            <tr className="animate-fade-in border-b border-black/[0.04] bg-accent/[0.06] last:border-0 dark:border-white/[0.05] dark:bg-accent-light/[0.08]">
               <td className="py-1.5" />
               {columns.map((col) => (
                 <td key={col.key} className="py-1.5 pr-4">
@@ -196,7 +201,7 @@ export default function EntriesTable({
       {!draftRow && (
         <button
           onClick={onStartDraft}
-          className="mt-3 w-full rounded-lg border border-dashed border-slate-300 py-2 text-sm text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
+          className="mt-4 w-full rounded-xl border border-dashed border-black/[0.12] py-2.5 text-sm text-slate-500 transition-all duration-200 ease-spring hover:border-accent/40 hover:bg-accent/[0.04] hover:text-accent dark:border-white/[0.12] dark:text-slate-400 dark:hover:border-accent-light/40 dark:hover:bg-accent-light/[0.06] dark:hover:text-accent-light"
         >
           + 추가
         </button>

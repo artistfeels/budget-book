@@ -1,9 +1,31 @@
 import { useThemeStore, type ThemeMode } from '../store/useThemeStore'
 
-const OPTIONS: { mode: ThemeMode; label: string; icon: string }[] = [
-  { mode: 'light', label: '라이트', icon: '☀️' },
-  { mode: 'dark', label: '다크', icon: '🌙' },
-  { mode: 'system', label: '시스템', icon: '🖥️' },
+const OPTIONS: { mode: ThemeMode; label: string; icon: JSX.Element }[] = [
+  {
+    mode: 'light',
+    label: '라이트',
+    icon: (
+      <>
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+      </>
+    ),
+  },
+  {
+    mode: 'dark',
+    label: '다크',
+    icon: <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />,
+  },
+  {
+    mode: 'system',
+    label: '시스템',
+    icon: (
+      <>
+        <rect x="2" y="4" width="20" height="13" rx="2" />
+        <path d="M8 21h8M12 17v4" />
+      </>
+    ),
+  },
 ]
 
 export default function ThemeToggle() {
@@ -11,7 +33,7 @@ export default function ThemeToggle() {
   const setMode = useThemeStore((s) => s.setMode)
 
   return (
-    <div className="flex items-center gap-0.5 rounded-lg bg-slate-100 p-0.5 dark:bg-slate-900">
+    <div className="segmented">
       {OPTIONS.map((opt) => (
         <button
           key={opt.mode}
@@ -20,13 +42,20 @@ export default function ThemeToggle() {
           aria-label={opt.label}
           aria-pressed={mode === opt.mode}
           onClick={() => setMode(opt.mode)}
-          className={`rounded-md px-2 py-1 text-sm transition-colors ${
-            mode === opt.mode
-              ? 'bg-white text-accent shadow-sm dark:bg-slate-700 dark:text-accent-light'
-              : 'text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200'
-          }`}
+          className={`btn-ghost px-2.5 py-1.5 ${mode === opt.mode ? 'btn-ghost-active' : ''}`}
         >
-          {opt.icon}
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-4 w-4"
+            aria-hidden="true"
+          >
+            {opt.icon}
+          </svg>
         </button>
       ))}
     </div>

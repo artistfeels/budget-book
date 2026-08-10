@@ -2,13 +2,137 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'Pretendard', system-ui, sans-serif;
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    @apply bg-canvas-light text-slate-900 dark:bg-canvas-dark dark:text-slate-100;
+    /* Tighter than the browser default — large Korean/Latin headings read as "set" rather than
+       "typed" at this tracking, which is most of what makes the type feel considered. */
+    letter-spacing: -0.011em;
+  }
+
+  /* Tied to the app's own light/dark/system selection (the `dark` class on <html>), not the OS
+     media query directly — otherwise native form controls (input, select) can render with dark
+     browser-default colors while the rest of the app is still light-themed, or vice versa. */
+  :root.dark {
+    color-scheme: dark;
+  }
+
+  /* Every animation in this app is decorative motion layered on content that is already readable
+     without it, so honoring this preference costs nothing and removes all of it. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
-/* Tied to the app's own light/dark/system selection (the `dark` class on <html>), not the OS
-   media query directly — otherwise native form controls (input, select) can render with dark
-   browser-default colors while the rest of the app is still light-themed, or vice versa. */
-:root.dark {
-  color-scheme: dark;
+@layer components {
+  /* The raised pane every panel in the app is built from. Deliberately padding-free so each
+     call site picks its own density; the surface treatment stays identical everywhere.
+     Two stacked shadows (a tight contact shadow plus a wide soft one) read as a real lifted
+     surface where a single mid shadow reads as a drawn border. */
+  .card {
+    @apply rounded-2xl border border-black/[0.06] bg-surface-light
+      shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_32px_-16px_rgba(0,0,0,0.14)]
+      transition-[transform,box-shadow,border-color] duration-300 ease-spring
+      dark:border-white/[0.07] dark:bg-surface-dark
+      dark:shadow-[0_1px_2px_rgba(0,0,0,0.4),0_12px_32px_-16px_rgba(0,0,0,0.8)];
+  }
+
+  /* Opt-in hover lift for cards that represent a single glanceable figure (KPI tiles,
+     infographic tiles). Not applied to chart panels, where a moving container fights the
+     chart's own hover affordances. */
+  .card-interactive {
+    @apply hover:-translate-y-0.5
+      hover:shadow-[0_2px_4px_rgba(0,0,0,0.05),0_20px_48px_-20px_rgba(0,0,0,0.2)]
+      dark:hover:border-white/[0.12]
+      dark:hover:shadow-[0_2px_4px_rgba(0,0,0,0.5),0_20px_48px_-20px_rgba(0,0,0,0.9)];
+  }
+
+  /* Frosted translucency for the sticky header — content scrolling beneath stays faintly
+     visible instead of vanishing under an opaque bar. */
+  .glass {
+    @apply border-black/[0.06] bg-canvas-light/70 backdrop-blur-xl backdrop-saturate-150
+      dark:border-white/[0.07] dark:bg-canvas-dark/70;
+  }
+
+  .btn-primary {
+    @apply rounded-full bg-accent px-5 py-2 text-sm font-medium text-white
+      transition-all duration-200 ease-spring
+      hover:bg-accent-dark hover:shadow-[0_4px_16px_-4px_rgba(0,113,227,0.5)]
+      active:scale-[0.97]
+      disabled:pointer-events-none disabled:opacity-40
+      dark:bg-accent-light dark:hover:bg-accent;
+  }
+
+  /* Neutral pill used for segmented controls and secondary actions. */
+  .btn-ghost {
+    @apply rounded-full px-4 py-1.5 text-sm font-medium text-slate-500
+      transition-all duration-200 ease-spring
+      hover:bg-black/[0.04] hover:text-slate-900
+      active:scale-[0.97]
+      dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-100;
+  }
+
+  .btn-ghost-active {
+    @apply bg-white text-accent shadow-[0_1px_3px_rgba(0,0,0,0.1)]
+      hover:bg-white hover:text-accent
+      dark:bg-white/[0.12] dark:text-accent-light dark:hover:bg-white/[0.12] dark:hover:text-accent-light;
+  }
+
+  /* Track behind a segmented control (period pickers, theme toggle, entry-section tabs). */
+  .segmented {
+    @apply inline-flex items-center gap-1 rounded-full bg-black/[0.04] p-1 dark:bg-white/[0.06];
+  }
+
+  .field {
+    @apply rounded-lg border border-black/[0.08] bg-white/60 px-3 py-1.5 text-sm text-slate-900
+      transition-colors duration-200
+      focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30
+      dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-slate-100
+      dark:placeholder:text-slate-500 dark:focus:border-accent-light dark:focus:ring-accent-light/30;
+  }
+
+  .page-title {
+    @apply text-3xl font-semibold tracking-[-0.02em] text-slate-900 dark:text-white;
+  }
+
+  .card-title {
+    @apply font-semibold tracking-[-0.01em] text-slate-800 dark:text-slate-100;
+  }
+}
+
+@layer utilities {
+  /* Entrance stagger: siblings animate in sequence rather than all at once, which is what makes
+     a grid of cards feel like it assembles instead of blinking into place. */
+  .stagger-1 {
+    animation-delay: 40ms;
+  }
+  .stagger-2 {
+    animation-delay: 80ms;
+  }
+  .stagger-3 {
+    animation-delay: 120ms;
+  }
+  .stagger-4 {
+    animation-delay: 160ms;
+  }
+  .stagger-5 {
+    animation-delay: 200ms;
+  }
+  .stagger-6 {
+    animation-delay: 240ms;
+  }
 }

@@ -311,7 +311,7 @@ export default function EntriesPage() {
 
   if (!month) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-6 text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:shadow-none">
+      <div className="card animate-fade-up p-6 text-slate-500 dark:text-slate-400">
         불러온 데이터가 없습니다. 먼저 데이터를 불러와주세요.
       </div>
     )
@@ -319,10 +319,10 @@ export default function EntriesPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-50">거래 입력/관리</h1>
+      <h1 className="page-title animate-fade-up mb-8">거래 입력/관리</h1>
 
       {error && (
-        <div className="mb-4 flex items-start justify-between gap-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600 dark:bg-rose-950 dark:text-rose-400">
+        <div className="animate-scale-in mb-4 flex items-start justify-between gap-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-400">
           <span>{error}</span>
           <button onClick={() => setError(null)} className="shrink-0 font-medium hover:underline">
             닫기

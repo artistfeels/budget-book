@@ -85,11 +85,11 @@ export default function SpendingPaceChart({ transactions, month }: SpendingPaceC
   const yAxisTicks = niceAxisTicks(yAxisMax)
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-      <p className="mb-1 font-medium text-slate-700 dark:text-slate-200">지출 속도 (Spending Pace)</p>
+    <div className="card animate-fade-up p-6">
+      <p className="card-title mb-2">지출 속도 (Spending Pace)</p>
       <div className="mb-4">
         <p className="text-sm font-medium">
-          <span className={isFaster ? 'text-rose-600' : 'text-emerald-600'}>
+          <span className={isFaster ? 'text-spending' : 'text-saving'}>
             {result.percentVsLastMonthSameDay === null
               ? '비교할 지난달 데이터가 없습니다.'
               : `지난달 같은 날 대비 ${isFaster ? '+' : ''}${(result.percentVsLastMonthSameDay * 100).toFixed(0)}% ${
@@ -97,7 +97,9 @@ export default function SpendingPaceChart({ transactions, month }: SpendingPaceC
                 }`}
           </span>
           {' · 이 속도면 월말 예상 '}
-          <span className="font-bold text-slate-800 dark:text-slate-50">{formatKRW(Math.round(projectedTotal))}</span>
+          <span className="font-semibold tabular-nums tracking-[-0.01em] text-slate-900 dark:text-white">
+            {formatKRW(Math.round(projectedTotal))}
+          </span>
         </p>
         {isMonthInProgress && pendingSubscriptions.length > 0 && (
           <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">

@@ -18,8 +18,8 @@ export default function MonthlyTrendChart({ summaries, onSelectMonth }: MonthlyT
   const theme = useChartTheme()
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-      <p className="mb-4 font-medium text-slate-700 dark:text-slate-200">월별 추이</p>
+    <div className="card animate-fade-up p-6">
+      <p className="card-title mb-5">월별 추이</p>
       <ResponsiveContainer width="100%" height={320}>
         <ComposedChart
           data={summaries}
