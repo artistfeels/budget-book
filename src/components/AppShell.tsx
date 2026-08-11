@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import BottomNav from './BottomNav'
 import BrandMark from './BrandMark'
+import { CalendarIcon, ChartIcon, DashboardIcon, ImportIcon, ListIcon } from './NavIcons'
 import ThemeToggle from './ThemeToggle'
 
-const navItems = [
-  { to: '/', label: '대시보드', end: true },
-  { to: '/monthly', label: '월간 상세', end: false },
-  { to: '/entries', label: '거래 관리', end: false },
-  { to: '/analytics', label: '분석', end: false },
-  { to: '/import', label: '불러오기', end: false },
+// Exported so BottomNav renders exactly the same destinations in the same order as the desktop nav —
+// two hand-maintained lists would drift.
+export const navItems = [
+  { to: '/', label: '대시보드', end: true, icon: DashboardIcon },
+  { to: '/monthly', label: '월간 상세', end: false, icon: CalendarIcon },
+  { to: '/entries', label: '거래 관리', end: false, icon: ListIcon },
+  { to: '/analytics', label: '분석', end: false, icon: ChartIcon },
+  { to: '/import', label: '불러오기', end: false, icon: ImportIcon },
 ]
 
 // Mirrors NavLink's own matching rules so the sliding pill and NavLink's `isActive` can never
@@ -68,13 +72,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-canvas-light dark:bg-canvas-dark">
       <header className="glass sticky top-0 z-10 border-b">
-        <div className="mx-auto flex max-w-[1800px] items-center gap-6 px-8 py-3.5">
+        <div className="mx-auto flex max-w-[1800px] items-center gap-6 px-4 py-3.5 md:px-8">
           <span className="flex select-none items-center gap-2.5 text-[17px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
             <BrandMark className="h-7 w-7" />
             가계부
           </span>
 
-          <nav ref={navRef} className="segmented relative">
+          <nav ref={navRef} className="segmented relative hidden md:inline-flex">
             <span
               aria-hidden="true"
               className={`pointer-events-none absolute inset-y-1 left-0 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-white/[0.14] ${
@@ -114,9 +118,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main key={pathname} className="mx-auto max-w-[1800px] px-8 py-10">
+      <main key={pathname} className="mx-auto max-w-[1800px] px-4 py-6 pb-28 md:px-8 md:py-10 md:pb-10">
         {children}
       </main>
+
+      <BottomNav />
     </div>
   )
 }
