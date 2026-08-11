@@ -35,7 +35,7 @@ export default function MonthDetailPage() {
 
   if (!month) {
     return (
-      <div className="card animate-fade-up p-6 text-slate-500 dark:text-slate-400">
+      <div className="card animate-fade-up p-4 md:p-6 text-slate-500 dark:text-slate-400">
         불러온 데이터가 없습니다. 먼저 데이터를 불러와주세요.
       </div>
     )
@@ -46,7 +46,7 @@ export default function MonthDetailPage() {
 
   return (
     <div>
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 md:mb-8">
         <h1 className="page-title animate-fade-up">월간 상세</h1>
         <select
           value={month}
