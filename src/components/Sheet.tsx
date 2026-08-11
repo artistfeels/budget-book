@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
 interface SheetProps {
   title: string
@@ -29,7 +30,11 @@ export default function Sheet({ title, onClose, children, footer }: SheetProps) 
     }
   }, [onClose])
 
-  return (
+  // Portalled to <body> because `position: fixed` resolves against the nearest transformed
+  // ancestor, not the viewport — and every .card in this app carries `animate-fade-up`, whose
+  // `both` fill mode leaves a transform on the element forever. Rendering in place would anchor
+  // the sheet to the middle of the card instead of the bottom of the screen.
+  return createPortal(
     <>
       <div
         className="animate-fade-in fixed inset-0 z-30 bg-black/20 backdrop-blur-[2px] dark:bg-black/50"
@@ -63,6 +68,7 @@ export default function Sheet({ title, onClose, children, footer }: SheetProps) 
           </div>
         )}
       </div>
-    </>
+    </>,
+    document.body
   )
 }

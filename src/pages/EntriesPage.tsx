@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import EntriesToolbar from '../components/entries/EntriesToolbar'
 import EntriesTable, { type EntryColumnDef } from '../components/entries/EntriesTable'
+import EntriesCardList from '../components/entries/EntriesCardList'
+import { useMediaQuery } from '../lib/useMediaQuery'
 import { useTransactionStore } from '../store/useTransactionStore'
 import { listAvailableMonths } from '../lib/aggregations'
 import {
@@ -60,6 +62,7 @@ export default function EntriesPage() {
   const deleteTransaction = useTransactionStore((s) => s.deleteTransaction)
   const addTransaction = useTransactionStore((s) => s.addTransaction)
   const setOverride = useTransactionStore((s) => s.setOverride)
+  const isDesktop = useMediaQuery('(min-width: 768px)')
 
   const [section, setSection] = useState<EntrySection>('spending')
   const availableMonths = useMemo(() => listAvailableMonths(transactions), [transactions])
@@ -351,26 +354,31 @@ export default function EntriesPage() {
       />
 
       <div className="mt-4">
-        <EntriesTable
-          columns={columns}
-          rows={sortedRows}
-          selectedIds={selectedIds}
-          onToggleSelect={toggleSelect}
-          onToggleSelectAll={toggleSelectAll}
-          onBulkDelete={handleBulkDelete}
-          onDeleteRow={handleDeleteRow}
-          onEditField={handleEditField}
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSortChange={handleSortChange}
-          totalAmount={totalAmount}
-          draftRow={draft}
-          onDraftChange={handleDraftChange}
-          onDraftSave={handleDraftSave}
-          onDraftCancel={() => setDraft(null)}
-          onStartDraft={() => setDraft(createDraft(section, month))}
-          overrideAction={overrideAction}
-        />
+        {(() => {
+          const listProps = {
+            columns,
+            rows: sortedRows,
+            selectedIds,
+            onToggleSelect: toggleSelect,
+            onToggleSelectAll: toggleSelectAll,
+            onBulkDelete: handleBulkDelete,
+            onDeleteRow: handleDeleteRow,
+            onEditField: handleEditField,
+            sortField,
+            sortDirection,
+            onSortChange: handleSortChange,
+            totalAmount,
+            draftRow: draft,
+            onDraftChange: handleDraftChange,
+            onDraftSave: handleDraftSave,
+            onDraftCancel: () => setDraft(null),
+            onStartDraft: () => setDraft(createDraft(section, month)),
+            overrideAction,
+          }
+          // Only one renderer mounts: the table builds an <input>/<select> per row per column, so
+          // rendering both and hiding one with CSS would double the DOM for hundreds of rows.
+          return isDesktop ? <EntriesTable {...listProps} /> : <EntriesCardList {...listProps} />
+        })()}
       </div>
     </div>
   )

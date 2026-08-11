@@ -11,7 +11,8 @@ export interface EntryColumnDef {
   options?: string[] | ((row: Transaction) => string[])
 }
 
-interface EntriesTableProps {
+/** Shared by EntriesTable (desktop) and EntriesCardList (mobile) — one list of props, two renderers. */
+export interface EntryListProps {
   columns: EntryColumnDef[]
   rows: Transaction[]
   selectedIds: Set<string>
@@ -37,7 +38,7 @@ function resolveOptions(col: EntryColumnDef, row: Transaction): string[] {
   return col.options ?? []
 }
 
-function EditableCell({
+export function EditableCell({
   col,
   row,
   onChange,
@@ -97,7 +98,7 @@ export default function EntriesTable({
   onDraftCancel,
   onStartDraft,
   overrideAction,
-}: EntriesTableProps) {
+}: EntryListProps) {
   const allSelected = rows.length > 0 && rows.every((r) => selectedIds.has(r.id))
 
   return (
