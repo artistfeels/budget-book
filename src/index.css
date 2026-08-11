@@ -106,7 +106,7 @@
   }
 
   .page-title {
-    @apply text-3xl font-semibold tracking-[-0.02em] text-slate-900 dark:text-white;
+    @apply text-2xl font-semibold tracking-[-0.02em] text-slate-900 md:text-3xl dark:text-white;
   }
 
   .card-title {
