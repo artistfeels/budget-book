@@ -22,3 +22,5 @@
 
 - `docs/superpowers/specs/2026-07-19-budget-book-design.md`
 - `docs/superpowers/plans/2026-07-19-budget-book-foundation.md` (이 단계)
+- `docs/superpowers/specs/2026-08-11-responsive-mobile-design.md`
+- `docs/superpowers/plans/2026-08-11-responsive-mobile.md`

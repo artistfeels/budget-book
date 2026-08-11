@@ -33,7 +33,9 @@ export default function MonthlyTrendChart({ summaries, onSelectMonth }: MonthlyT
           <CartesianGrid strokeDasharray="3 3" stroke={theme.grid} />
           <XAxis
             dataKey="month"
-            interval={isDesktop ? 0 : 'preserveStartEnd'}
+            // undefined on desktop so recharts keeps its own default thinning; only the phone
+            // needs the stricter start/end-only rule to stop labels colliding.
+            interval={isDesktop ? undefined : 'preserveStartEnd'}
             tick={{ fontSize: isDesktop ? 12 : 10, fill: theme.axisTick }}
           />
           <YAxis

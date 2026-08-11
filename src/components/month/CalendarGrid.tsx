@@ -75,7 +75,7 @@ export default function CalendarGrid({ transactions, month, onDayClick }: Calend
                     onClick={() => onDayClick(day.date)}
                     // Amounts do not fit a ~44px cell, so on phones the cell carries only the date
                     // and its spending tint; the figures live in the day detail sheet a tap away.
-                    className="min-h-[44px] rounded-lg p-1.5 text-center text-xs tabular-nums transition-all duration-200 ease-spring hover:scale-[1.04] hover:ring-2 hover:ring-accent/40 md:p-2 md:text-left"
+                    className="min-h-[44px] rounded-lg p-1.5 text-center text-xs tabular-nums transition-all duration-200 ease-spring hover:scale-[1.04] hover:ring-2 hover:ring-accent/40 md:min-h-0 md:p-2 md:text-left"
                     style={{ backgroundColor: intensity > 0 ? `rgba(225, 29, 72, ${intensity})` : 'transparent' }}
                   >
                     <div className="font-medium text-slate-700 dark:text-slate-200">{Number(day.date.slice(-2))}</div>
