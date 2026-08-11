@@ -3,6 +3,7 @@ import {
   blendSubscriptionProjection,
   dailySummaries,
   monthInfographics,
+  spendingIntensity,
   spendingPaceSeries,
   weeklySpendingBands,
   type SpendingPacePoint,
@@ -339,5 +340,29 @@ describe('monthInfographics', () => {
     expect(result.biggestSpendDay).toBeNull()
     expect(result.mostFrequentMerchant).toBeNull()
     expect(result.noSpendDayCount).toBe(30)
+  })
+})
+
+describe('spendingIntensity', () => {
+  it('지출이 없으면 0을 반환한다 — 셀에 배경색이 칠해지지 않는다', () => {
+    expect(spendingIntensity(0, 50000)).toBe(0)
+    expect(spendingIntensity(-100, 50000)).toBe(0)
+  })
+
+  it('최대 지출액이 0 이하면 0으로 나누지 않고 0을 반환한다', () => {
+    expect(spendingIntensity(0, 0)).toBe(0)
+    expect(spendingIntensity(1000, 0)).toBe(0)
+  })
+
+  it('최댓값인 날은 상한 0.6을 받는다', () => {
+    expect(spendingIntensity(50000, 50000)).toBeCloseTo(0.6)
+  })
+
+  it('지출이 있는 날은 최소 0.1의 바닥값을 받아 배경이 보인다', () => {
+    expect(spendingIntensity(1, 1_000_000)).toBeGreaterThanOrEqual(0.1)
+  })
+
+  it('최댓값의 절반은 0.1 + 0.25 = 0.35다', () => {
+    expect(spendingIntensity(25000, 50000)).toBeCloseTo(0.35)
   })
 })

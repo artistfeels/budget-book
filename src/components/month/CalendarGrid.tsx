@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { dailySummaries, weeklySpendingBands } from '../../lib/monthDetailAggregations'
+import { dailySummaries, spendingIntensity, weeklySpendingBands } from '../../lib/monthDetailAggregations'
 import { formatKRW } from '../../lib/format'
 import type { Transaction } from '../../types/transaction'
 
@@ -68,7 +68,7 @@ export default function CalendarGrid({ transactions, month, onDayClick }: Calend
               {band.weekIndex === 0 &&
                 Array.from({ length: firstDayOffset }).map((_, i) => <div key={`empty-${i}`} />)}
               {bandDays.map((day) => {
-                const intensity = day.spending > 0 ? 0.1 + (day.spending / maxSpending) * 0.5 : 0
+                const intensity = spendingIntensity(day.spending, maxSpending)
                 return (
                   <button
                     key={day.date}
