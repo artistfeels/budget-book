@@ -114,19 +114,20 @@ md:rounded-none md:animate-slide-in-right
 
 `grid-cols-7`과 주별 밴드 구조를 유지한다.
 
-- 셀 안의 수입/지출 금액 두 줄에 `hidden md:block`
-- 모바일 셀: 날짜 숫자 + 그 아래 지출 강도 막대. 그 달 최대 일일 지출 대비 비율로 높이와 불투명도를 정한다
-- 밴드 헤더가 이미 폭 비례 배경(`bg-spending/[0.07]`, `width: n%`)을 쓰므로 같은 시각 언어다
-- 금액은 날짜를 탭했을 때 열리는 `DayTransactionPanel`에서 본다
-- 셀 터치 타깃이 최소 44px가 되도록 `min-h`를 준다
+셀에는 **이미 지출 강도가 배경색으로 구현돼 있다** — `CalendarGrid.tsx:71`의 `0.1 + (day.spending / maxSpending) * 0.5`를 `rgba(225, 29, 72, intensity)` 배경으로 칠한다. 따라서 강도 막대를 새로 만들 필요가 없다. 모바일에서는 이 배경만 남기고 금액 텍스트를 걷어낸다.
 
-강도 계산은 순수 함수이므로 `monthDetailAggregations.ts`에 넣고 단위 테스트를 붙인다:
+- 셀 안의 수입/지출 금액 두 줄에 `hidden md:block`
+- 모바일 셀에는 날짜 숫자 + 기존 강도 배경만 남는다. 숫자를 가운데 정렬하고 `min-h-[44px]`로 터치 타깃을 확보한다
+- 금액은 날짜를 탭했을 때 열리는 `DayTransactionPanel`에서 본다
+- 밴드 헤더의 금액은 그대로 둔다 — 주 단위 합계는 좁은 화면에서도 읽을 만하다
+
+강도 계산은 JSX 안에 매직 넘버(`0.1`, `0.5`)로 박혀 있으므로 `monthDetailAggregations.ts`의 순수 함수로 추출하고 단위 테스트를 붙인다:
 
 ```
 spendingIntensity(spending: number, maxSpending: number): number  // 0..1
 ```
 
-`maxSpending`이 0이면 0을 반환한다 (지출이 하나도 없는 달).
+`spending`이 0 이하이거나 `maxSpending`이 0 이하이면 0을 반환한다. 동작은 현재 식과 동일하게 유지한다 — 이번 작업에서 시각적 변화는 없다.
 
 ### 차트
 
@@ -152,7 +153,7 @@ spendingIntensity(spending: number, maxSpending: number): number  // 0..1
 - 헤더의 월 선택 + 세그먼트 묶음을 모바일에서 세로로 쌓고 세그먼트에 `overflow-x-auto`
 
 **불러오기**
-- 미리보기 테이블에 `overflow-x-auto`, 주요 버튼 full-width. 깨지지 않는 수준까지만
+- 미리보기 테이블에는 이미 `overflow-x-auto`가 걸려 있고 월 선택 칩도 `flex-wrap`이다. 페이지 고유의 변경은 없고, 전역 여백·타이틀 변경만으로 동작한다. 실제 기기 확인만 한다
 
 **전역**
 - `.page-title`: `text-2xl md:text-3xl`
@@ -173,7 +174,7 @@ spendingIntensity(spending: number, maxSpending: number): number  // 0..1
 - `tailwind.config.js` — `slide-up` 키프레임
 - `src/index.css` — `.page-title` 반응형
 - `src/components/AppShell.tsx` — nav 숨김, 탭바, main 여백
-- `src/pages/*.tsx` (5개) — 헤더 스택, 세그먼트 스크롤, 카드 리스트 분기
+- `src/pages/DashboardPage.tsx`, `AnalyticsPage.tsx`, `EntriesPage.tsx` — 헤더 스택, 세그먼트 스크롤, 카드 리스트 분기 (`MonthDetailPage`/`ImportPage`는 전역 변경만으로 충분)
 - `src/components/dashboard/KpiCards.tsx`
 - `src/components/month/CalendarGrid.tsx`
 - `src/components/month/DayTransactionPanel.tsx`
