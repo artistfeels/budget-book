@@ -10,7 +10,7 @@ const STAGGER = ['stagger-1', 'stagger-2', 'stagger-3', 'stagger-4', 'stagger-5'
 
 export default function InsightFeed({ insights }: InsightFeedProps) {
   return (
-    <div className="card animate-fade-up p-6">
+    <div className="card animate-fade-up p-4 md:p-6">
       <p className="card-title mb-5">인사이트</p>
       {insights.length === 0 ? (
         <p className="text-sm text-slate-400 dark:text-slate-500">아직 표시할 인사이트가 없어요.</p>

@@ -62,7 +62,7 @@ export default function ImportPage() {
 
   return (
     <div>
-      <h1 className="page-title animate-fade-up mb-8">데이터 불러오기</h1>
+      <h1 className="page-title animate-fade-up mb-6 md:mb-8">데이터 불러오기</h1>
 
       <button
         onClick={handleReclassifyAll}
@@ -89,7 +89,7 @@ export default function ImportPage() {
       )}
 
       {parsedRows.length > 0 && (
-        <div className="card animate-fade-up mb-6 p-6">
+        <div className="card animate-fade-up mb-6 p-4 md:p-6">
           <p className="card-title mb-4">불러올 월 선택 ({parsedRows.length}건 파싱됨)</p>
           <div className="mb-5 flex flex-wrap gap-2">
             {months.map((month) => (
@@ -118,7 +118,7 @@ export default function ImportPage() {
       )}
 
       {summary && (
-        <div className="card animate-fade-up p-6">
+        <div className="card animate-fade-up p-4 md:p-6">
           <p className="text-slate-700 dark:text-slate-200">
             신규 {summary.inserted}건, 중복(스킵) {summary.duplicates}건
           </p>
@@ -126,7 +126,7 @@ export default function ImportPage() {
       )}
 
       {parsedRows.length > 0 && (
-        <div className="card animate-fade-up mt-6 overflow-x-auto p-6">
+        <div className="card animate-fade-up mt-6 overflow-x-auto p-4 md:p-6">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-black/[0.06] text-left text-slate-500 dark:border-white/[0.07] dark:text-slate-400">

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { dailySummaries, weeklySpendingBands } from '../../lib/monthDetailAggregations'
+import { dailySummaries, spendingIntensity, weeklySpendingBands } from '../../lib/monthDetailAggregations'
 import { formatKRW } from '../../lib/format'
 import type { Transaction } from '../../types/transaction'
 
@@ -25,7 +25,7 @@ export default function CalendarGrid({ transactions, month, onDayClick }: Calend
   }, [daily])
 
   return (
-    <div className="card animate-fade-up p-6">
+    <div className="card animate-fade-up p-4 md:p-6">
       <div className="mb-3 grid grid-cols-7 text-center text-xs font-medium text-slate-500 dark:text-slate-400">
         {WEEKDAY_LABELS.map((label) => (
           <div key={label}>{label}</div>
@@ -40,7 +40,7 @@ export default function CalendarGrid({ transactions, month, onDayClick }: Calend
             key={band.weekIndex}
             className="mb-2.5 overflow-hidden rounded-xl border border-black/[0.06] dark:border-white/[0.07]"
           >
-            <div className="relative px-3.5 py-2.5">
+            <div className="relative px-3 py-2.5 md:px-3.5">
               <div
                 className="absolute inset-y-0 left-0 bg-spending/[0.07] transition-[width] duration-700 ease-spring dark:bg-spending/[0.14]"
                 style={{ width: `${band.total > 0 ? weeklyBarWidth : 0}%` }}
@@ -68,17 +68,19 @@ export default function CalendarGrid({ transactions, month, onDayClick }: Calend
               {band.weekIndex === 0 &&
                 Array.from({ length: firstDayOffset }).map((_, i) => <div key={`empty-${i}`} />)}
               {bandDays.map((day) => {
-                const intensity = day.spending > 0 ? 0.1 + (day.spending / maxSpending) * 0.5 : 0
+                const intensity = spendingIntensity(day.spending, maxSpending)
                 return (
                   <button
                     key={day.date}
                     onClick={() => onDayClick(day.date)}
-                    className="rounded-lg p-2 text-left text-xs tabular-nums transition-all duration-200 ease-spring hover:scale-[1.04] hover:ring-2 hover:ring-accent/40"
+                    // Amounts do not fit a ~44px cell, so on phones the cell carries only the date
+                    // and its spending tint; the figures live in the day detail sheet a tap away.
+                    className="min-h-[44px] rounded-lg p-1.5 text-center text-xs tabular-nums transition-all duration-200 ease-spring hover:scale-[1.04] hover:ring-2 hover:ring-accent/40 md:min-h-0 md:p-2 md:text-left"
                     style={{ backgroundColor: intensity > 0 ? `rgba(225, 29, 72, ${intensity})` : 'transparent' }}
                   >
                     <div className="font-medium text-slate-700 dark:text-slate-200">{Number(day.date.slice(-2))}</div>
-                    {day.income > 0 && <div className="text-income">+{formatKRW(day.income)}</div>}
-                    {day.spending > 0 && <div className="text-spending">-{formatKRW(day.spending)}</div>}
+                    {day.income > 0 && <div className="hidden text-income md:block">+{formatKRW(day.income)}</div>}
+                    {day.spending > 0 && <div className="hidden text-spending md:block">-{formatKRW(day.spending)}</div>}
                   </button>
                 )
               })}

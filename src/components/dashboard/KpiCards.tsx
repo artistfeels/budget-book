@@ -51,13 +51,14 @@ export default function KpiCards({
           만원 단위
         </button>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      {/* Two-up on phones: one column would run five tiles down the screen before the first chart. */}
+      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-5">
         {cards.map((card, i) => (
-          <div key={card.label} className={`card card-interactive animate-fade-up p-6 ${STAGGER[i]}`}>
+          <div key={card.label} className={`card card-interactive animate-fade-up p-4 md:p-6 ${STAGGER[i]}`}>
             <p className="mb-3 text-[13px] font-medium tracking-[-0.005em] text-slate-500 dark:text-slate-400">
               {card.label}
             </p>
-            <p className={`text-[26px] font-semibold leading-none tracking-[-0.02em] ${card.color}`}>
+            <p className={`text-[20px] font-semibold leading-none tracking-[-0.02em] md:text-[26px] ${card.color}`}>
               {typeof card.value === 'number' ? fmt(card.value) : card.value}
             </p>
           </div>

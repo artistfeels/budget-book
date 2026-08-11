@@ -51,19 +51,23 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 md:mb-8">
         <h1 className="page-title animate-fade-up">대시보드</h1>
-        <div className="segmented animate-fade-up stagger-1">
-          {PERIOD_OPTIONS.map((p) => (
-            <button
-              key={p.value}
-              onClick={() => setPeriod(p.value)}
-              aria-pressed={period === p.value}
-              className={`btn-ghost ${period === p.value ? 'btn-ghost-active' : ''}`}
-            >
-              {p.label}
-            </button>
-          ))}
+        {/* Full width below md so the control drops to its own row, and scrolls sideways rather
+            than wrapping each label onto two lines. */}
+        <div className="animate-fade-up stagger-1 -mx-1 w-full overflow-x-auto px-1 md:mx-0 md:w-auto md:overflow-visible md:px-0">
+          <div className="segmented">
+            {PERIOD_OPTIONS.map((p) => (
+              <button
+                key={p.value}
+                onClick={() => setPeriod(p.value)}
+                aria-pressed={period === p.value}
+                className={`btn-ghost whitespace-nowrap ${period === p.value ? 'btn-ghost-active' : ''}`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

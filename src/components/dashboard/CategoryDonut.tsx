@@ -3,6 +3,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { categoryBreakdown, subcategoryBreakdown, type AmountBreakdownItem } from '../../lib/dashboardAggregations'
 import { formatKRW } from '../../lib/format'
 import { useChartTheme } from '../../lib/useChartTheme'
+import { useMediaQuery } from '../../lib/useMediaQuery'
 import type { Transaction } from '../../types/transaction'
 
 const COLORS = ['#2563eb', '#e11d48', '#059669', '#d97706', '#7c3aed', '#0891b2', '#db2777', '#65a30d', '#475569', '#ea580c']
@@ -21,9 +22,10 @@ export default function CategoryDonut({ transactions }: CategoryDonutProps) {
 
   const total = items.reduce((sum, i) => sum + i.amount, 0)
   const theme = useChartTheme()
+  const isDesktop = useMediaQuery('(min-width: 768px)')
 
   return (
-    <div className="card animate-fade-up p-6">
+    <div className="card animate-fade-up p-4 md:p-6">
       <div className="mb-4 flex items-center justify-between">
         <p className="card-title">
           지출 카테고리 구성 {drilldown && <span className="text-slate-400 dark:text-slate-500">/ {drilldown}</span>}
@@ -36,14 +38,14 @@ export default function CategoryDonut({ transactions }: CategoryDonutProps) {
       </div>
       <div className="flex flex-col gap-4 sm:flex-row">
         <div className="sm:w-1/2">
-          <ResponsiveContainer width="100%" height={240}>
+          <ResponsiveContainer width="100%" height={isDesktop ? 240 : 200}>
             <PieChart>
               <Pie
                 data={items}
                 dataKey="amount"
                 nameKey="label"
-                innerRadius={60}
-                outerRadius={100}
+                innerRadius={isDesktop ? 60 : 46}
+                outerRadius={isDesktop ? 100 : 78}
                 onClick={(entry) => {
                   if (!drilldown) setDrilldown(entry.label)
                 }}

@@ -26,7 +26,11 @@ export default function DayTransactionPanel({ date, transactions, onClose }: Day
         className="animate-fade-in fixed inset-0 z-20 bg-black/20 backdrop-blur-[2px] dark:bg-black/50"
         aria-hidden="true"
       />
-      <div className="animate-slide-in-right fixed inset-y-0 right-0 z-30 w-full max-w-sm overflow-y-auto border-l border-black/[0.06] bg-surface-light p-6 shadow-2xl dark:border-white/[0.07] dark:bg-surface-dark">
+      {/* Bottom sheet on phones, right-edge drawer from md up. */}
+      <div
+        className="animate-slide-up fixed inset-x-0 bottom-0 z-30 max-h-[85vh] overflow-y-auto rounded-t-2xl border-t border-black/[0.06] bg-surface-light p-6 shadow-2xl md:inset-y-0 md:left-auto md:right-0 md:max-h-none md:w-full md:max-w-sm md:animate-slide-in-right md:rounded-none md:border-l md:border-t-0 dark:border-white/[0.07] dark:bg-surface-dark"
+        style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+      >
         <div className="mb-5 flex items-center justify-between">
           <p className="text-xl font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">{date}</p>
           <button

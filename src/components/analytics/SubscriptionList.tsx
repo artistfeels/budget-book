@@ -11,7 +11,7 @@ export default function SubscriptionList({ transactions }: SubscriptionListProps
   const total = subscriptions.reduce((sum, s) => sum + s.amount, 0)
 
   return (
-    <div className="card animate-fade-up p-6">
+    <div className="card animate-fade-up p-4 md:p-6">
       <p className="card-title mb-5">구독·정기결제</p>
       {subscriptions.length === 0 ? (
         <p className="text-sm text-slate-400 dark:text-slate-500">최근 몇 달간 꾸준히 반복된 결제가 없어요.</p>

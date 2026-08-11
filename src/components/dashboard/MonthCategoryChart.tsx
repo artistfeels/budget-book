@@ -1,7 +1,8 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { categoryBreakdown } from '../../lib/dashboardAggregations'
-import { formatKRW } from '../../lib/format'
+import { formatKRW, formatKRWCompact } from '../../lib/format'
 import { useChartTheme } from '../../lib/useChartTheme'
+import { useMediaQuery } from '../../lib/useMediaQuery'
 import type { Transaction } from '../../types/transaction'
 
 interface MonthCategoryChartProps {
@@ -14,9 +15,10 @@ export default function MonthCategoryChart({ transactions, month }: MonthCategor
   const items = categoryBreakdown(monthTransactions)
   const total = items.reduce((sum, item) => sum + item.amount, 0)
   const theme = useChartTheme()
+  const isDesktop = useMediaQuery('(min-width: 768px)')
 
   return (
-    <div className="card animate-fade-up p-6">
+    <div className="card animate-fade-up p-4 md:p-6">
       <div className="mb-4 flex items-baseline justify-between">
         <p className="card-title">월간 항목별 지출 ({month})</p>
         <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -31,11 +33,23 @@ export default function MonthCategoryChart({ transactions, month }: MonthCategor
       ) : (
         // Category-only data (no total row mixed in) so bar length reads as a relative
         // scale — the biggest category naturally fills the chart width, others scale against it.
-        <ResponsiveContainer width="100%" height={Math.max(240, items.length * 32)}>
-          <BarChart data={items} layout="vertical" margin={{ left: 20 }}>
+        <ResponsiveContainer
+          width="100%"
+          height={Math.max(isDesktop ? 240 : 200, items.length * (isDesktop ? 32 : 26))}
+        >
+          <BarChart data={items} layout="vertical" margin={{ left: isDesktop ? 20 : 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={theme.grid} />
-            <XAxis type="number" tickFormatter={(v) => formatKRW(v)} tick={{ fontSize: 11, fill: theme.axisTick }} />
-            <YAxis type="category" dataKey="label" tick={{ fontSize: 12, fill: theme.axisTick }} width={90} />
+            <XAxis
+              type="number"
+              tickFormatter={(v) => (isDesktop ? formatKRW(v) : formatKRWCompact(v))}
+              tick={{ fontSize: 11, fill: theme.axisTick }}
+            />
+            <YAxis
+              type="category"
+              dataKey="label"
+              tick={{ fontSize: isDesktop ? 12 : 10, fill: theme.axisTick }}
+              width={isDesktop ? 90 : 68}
+            />
             <Tooltip formatter={(value: number) => formatKRW(value)} contentStyle={theme.tooltipContentStyle} />
             <Bar dataKey="amount" fill={theme.series.blue} barSize={16} radius={[0, 4, 4, 0]} />
           </BarChart>

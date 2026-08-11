@@ -37,7 +37,7 @@ export default function CategoryHeatmap({ transactions }: CategoryHeatmapProps) 
   }
 
   return (
-    <div className="card animate-fade-up p-6">
+    <div className="card animate-fade-up p-4 md:p-6">
       <p className="card-title mb-5">카테고리별 월간 히트맵</p>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">

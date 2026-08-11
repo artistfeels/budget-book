@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import EntriesToolbar from '../components/entries/EntriesToolbar'
 import EntriesTable, { type EntryColumnDef } from '../components/entries/EntriesTable'
+import EntriesCardList from '../components/entries/EntriesCardList'
+import { useMediaQuery } from '../lib/useMediaQuery'
 import { useTransactionStore } from '../store/useTransactionStore'
 import { listAvailableMonths } from '../lib/aggregations'
 import {
@@ -60,6 +62,7 @@ export default function EntriesPage() {
   const deleteTransaction = useTransactionStore((s) => s.deleteTransaction)
   const addTransaction = useTransactionStore((s) => s.addTransaction)
   const setOverride = useTransactionStore((s) => s.setOverride)
+  const isDesktop = useMediaQuery('(min-width: 768px)')
 
   const [section, setSection] = useState<EntrySection>('spending')
   const availableMonths = useMemo(() => listAvailableMonths(transactions), [transactions])
@@ -311,7 +314,7 @@ export default function EntriesPage() {
 
   if (!month) {
     return (
-      <div className="card animate-fade-up p-6 text-slate-500 dark:text-slate-400">
+      <div className="card animate-fade-up p-4 md:p-6 text-slate-500 dark:text-slate-400">
         불러온 데이터가 없습니다. 먼저 데이터를 불러와주세요.
       </div>
     )
@@ -319,7 +322,7 @@ export default function EntriesPage() {
 
   return (
     <div>
-      <h1 className="page-title animate-fade-up mb-8">거래 입력/관리</h1>
+      <h1 className="page-title animate-fade-up mb-6 md:mb-8">거래 입력/관리</h1>
 
       {error && (
         <div className="animate-scale-in mb-4 flex items-start justify-between gap-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-400">
@@ -351,26 +354,31 @@ export default function EntriesPage() {
       />
 
       <div className="mt-4">
-        <EntriesTable
-          columns={columns}
-          rows={sortedRows}
-          selectedIds={selectedIds}
-          onToggleSelect={toggleSelect}
-          onToggleSelectAll={toggleSelectAll}
-          onBulkDelete={handleBulkDelete}
-          onDeleteRow={handleDeleteRow}
-          onEditField={handleEditField}
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSortChange={handleSortChange}
-          totalAmount={totalAmount}
-          draftRow={draft}
-          onDraftChange={handleDraftChange}
-          onDraftSave={handleDraftSave}
-          onDraftCancel={() => setDraft(null)}
-          onStartDraft={() => setDraft(createDraft(section, month))}
-          overrideAction={overrideAction}
-        />
+        {(() => {
+          const listProps = {
+            columns,
+            rows: sortedRows,
+            selectedIds,
+            onToggleSelect: toggleSelect,
+            onToggleSelectAll: toggleSelectAll,
+            onBulkDelete: handleBulkDelete,
+            onDeleteRow: handleDeleteRow,
+            onEditField: handleEditField,
+            sortField,
+            sortDirection,
+            onSortChange: handleSortChange,
+            totalAmount,
+            draftRow: draft,
+            onDraftChange: handleDraftChange,
+            onDraftSave: handleDraftSave,
+            onDraftCancel: () => setDraft(null),
+            onStartDraft: () => setDraft(createDraft(section, month)),
+            overrideAction,
+          }
+          // Only one renderer mounts: the table builds an <input>/<select> per row per column, so
+          // rendering both and hiding one with CSS would double the DOM for hundreds of rows.
+          return isDesktop ? <EntriesTable {...listProps} /> : <EntriesCardList {...listProps} />
+        })()}
       </div>
     </div>
   )

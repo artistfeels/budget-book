@@ -16,7 +16,7 @@ export default function CategoryTrendRanking({ transactions, month }: CategoryTr
     .slice(0, 3)
 
   return (
-    <div className="card animate-fade-up p-6">
+    <div className="card animate-fade-up p-4 md:p-6">
       <p className="card-title mb-5">카테고리 증감 랭킹 ({month} 기준, 직전 3개월 평균 대비)</p>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>

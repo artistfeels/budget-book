@@ -1,8 +1,9 @@
 import { Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { MonthlySummary } from '../../lib/aggregations'
-import { formatKRW, formatManwon } from '../../lib/format'
+import { formatKRW, formatKRWCompact, formatManwon } from '../../lib/format'
 import { niceAxisTicks } from '../../lib/chartTicks'
 import { useChartTheme } from '../../lib/useChartTheme'
+import { useMediaQuery } from '../../lib/useMediaQuery'
 
 interface MonthlyTrendChartProps {
   summaries: MonthlySummary[]
@@ -16,11 +17,12 @@ export default function MonthlyTrendChart({ summaries, onSelectMonth }: MonthlyT
   const yAxisMax = Math.max(0, ...summaries.flatMap((s) => [s.income, s.spending + s.saving, s.netCashFlow]))
   const yAxisTicks = niceAxisTicks(yAxisMax)
   const theme = useChartTheme()
+  const isDesktop = useMediaQuery('(min-width: 768px)')
 
   return (
-    <div className="card animate-fade-up p-6">
+    <div className="card animate-fade-up p-4 md:p-6">
       <p className="card-title mb-5">월별 추이</p>
-      <ResponsiveContainer width="100%" height={320}>
+      <ResponsiveContainer width="100%" height={isDesktop ? 320 : 240}>
         <ComposedChart
           data={summaries}
           onClick={(state) => {
@@ -29,11 +31,17 @@ export default function MonthlyTrendChart({ summaries, onSelectMonth }: MonthlyT
           }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke={theme.grid} />
-          <XAxis dataKey="month" tick={{ fontSize: 12, fill: theme.axisTick }} />
+          <XAxis
+            dataKey="month"
+            // undefined on desktop so recharts keeps its own default thinning; only the phone
+            // needs the stricter start/end-only rule to stop labels colliding.
+            interval={isDesktop ? undefined : 'preserveStartEnd'}
+            tick={{ fontSize: isDesktop ? 12 : 10, fill: theme.axisTick }}
+          />
           <YAxis
-            tickFormatter={(v) => formatManwon(v)}
-            tick={{ fontSize: 12, fill: theme.axisTick }}
-            width={70}
+            tickFormatter={(v) => (isDesktop ? formatManwon(v) : formatKRWCompact(v))}
+            tick={{ fontSize: isDesktop ? 12 : 10, fill: theme.axisTick }}
+            width={isDesktop ? 70 : 44}
             domain={[yAxisTicks[0], yAxisTicks[yAxisTicks.length - 1]]}
             ticks={yAxisTicks}
           />

@@ -267,3 +267,13 @@ export function monthInfographics(transactions: Transaction[], month: string): M
     noSpendDayCount,
   }
 }
+
+/**
+ * Background opacity for a calendar day cell, scaled against the month's heaviest spending day.
+ * The 0.1 floor keeps any day with spending visibly tinted rather than fading to nothing, and the
+ * 0.5 span keeps the darkest cell light enough for the date number to stay readable in both themes.
+ */
+export function spendingIntensity(spending: number, maxSpending: number): number {
+  if (spending <= 0 || maxSpending <= 0) return 0
+  return 0.1 + (spending / maxSpending) * 0.5
+}

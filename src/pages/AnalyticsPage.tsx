@@ -58,7 +58,7 @@ export default function AnalyticsPage() {
 
   if (!month) {
     return (
-      <div className="card animate-fade-up p-6 text-slate-500 dark:text-slate-400">
+      <div className="card animate-fade-up p-4 md:p-6 text-slate-500 dark:text-slate-400">
         불러온 데이터가 없습니다. 먼저 데이터를 불러와주세요.
       </div>
     )
@@ -66,27 +66,33 @@ export default function AnalyticsPage() {
 
   return (
     <div>
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 md:mb-8">
         <h1 className="page-title animate-fade-up">분석</h1>
-        <div className="animate-fade-up stagger-1 flex flex-wrap items-center gap-3">
-          <select value={month} onChange={(e) => setSelectedMonth(e.target.value)} className="field font-medium">
+        <div className="animate-fade-up stagger-1 flex w-full flex-wrap items-center gap-3 md:w-auto">
+          <select
+            value={month}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="field w-full font-medium md:w-auto"
+          >
             {[...availableMonths].reverse().map((m) => (
               <option key={m} value={m}>
                 {m}
               </option>
             ))}
           </select>
-          <div className="segmented">
-            {PERIOD_OPTIONS.map((p) => (
-              <button
-                key={p.value}
-                onClick={() => setPeriod(p.value)}
-                aria-pressed={period === p.value}
-                className={`btn-ghost ${period === p.value ? 'btn-ghost-active' : ''}`}
-              >
-                {p.label}
-              </button>
-            ))}
+          <div className="-mx-1 w-full overflow-x-auto px-1 md:mx-0 md:w-auto md:overflow-visible md:px-0">
+            <div className="segmented">
+              {PERIOD_OPTIONS.map((p) => (
+                <button
+                  key={p.value}
+                  onClick={() => setPeriod(p.value)}
+                  aria-pressed={period === p.value}
+                  className={`btn-ghost whitespace-nowrap ${period === p.value ? 'btn-ghost-active' : ''}`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
