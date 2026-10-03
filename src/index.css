@@ -24,6 +24,22 @@
     color-scheme: dark;
   }
 
+  /* The open dropdown list is drawn by the browser, not the select, and it ignores the select's
+     translucent background (`.field` uses bg-white/[0.04] in dark mode) — falling back to a white
+     panel while the option text still inherits the light dark-mode color, which made every item
+     unreadable. Give the options their own opaque surface so list and text always contrast. */
+  select option,
+  select optgroup {
+    background-color: #ffffff;
+    color: #1d1d1f;
+  }
+
+  :root.dark select option,
+  :root.dark select optgroup {
+    background-color: #161618;
+    color: #f5f5f7;
+  }
+
   /* Every animation in this app is decorative motion layered on content that is already readable
      without it, so honoring this preference costs nothing and removes all of it. */
   @media (prefers-reduced-motion: reduce) {
@@ -103,6 +119,12 @@
       focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30
       dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-slate-100
       dark:placeholder:text-slate-500 dark:focus:border-accent-light dark:focus:ring-accent-light/30;
+  }
+
+  /* Same reason as the option rules in @layer base: a translucent select background makes some
+     browsers paint the popup white. Selects get a solid fill that matches the card they sit on. */
+  select.field {
+    @apply bg-white dark:bg-surface-dark;
   }
 
   .page-title {

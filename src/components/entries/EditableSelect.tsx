@@ -50,7 +50,7 @@ export default function EditableSelect({ value, options, onChange, className }: 
         }
         onChange(e.target.value)
       }}
-      className={className ?? 'w-full rounded border px-2 py-1 text-sm'}
+      className={className ?? 'field w-full px-2 py-1'}
     >
       {!value && <option value="">선택</option>}
       {allOptions.map((opt) => (
