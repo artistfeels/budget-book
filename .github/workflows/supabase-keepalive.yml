@@ -11,6 +11,9 @@ jobs:
     steps:
       - name: Ping Supabase REST API
         run: |
-          curl -sf "${{ secrets.SUPABASE_URL }}/rest/v1/" \
+          # /rest/v1/ 루트는 anon 키로 401이라 실제 테이블을 조회한다 (RLS로 막혀도 200 + 빈 배열)
+          curl -sf --retry 3 --retry-delay 10 \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/transactions?select=id&limit=1" \
             -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
             -o /dev/null
