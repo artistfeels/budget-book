@@ -52,7 +52,13 @@ export default function KpiCards({
       {/* Two-up on phones: one column would run five tiles down the screen before the first chart. */}
       <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-5">
         {cards.map((card, i) => (
-          <div key={card.label} className={`card card-interactive animate-fade-up p-4 md:p-6 ${STAGGER[i]}`}>
+          <div
+            key={card.label}
+            // Odd tile count: the last tile spans both phone columns instead of sitting alone half-width.
+            className={`card card-interactive animate-fade-up p-4 md:p-6 ${STAGGER[i]} ${
+              cards.length % 2 === 1 && i === cards.length - 1 ? 'col-span-2 lg:col-span-1' : ''
+            }`}
+          >
             <p className="mb-3 text-[13px] font-medium tracking-[-0.005em] text-slate-500 dark:text-slate-400">
               {card.label}
             </p>

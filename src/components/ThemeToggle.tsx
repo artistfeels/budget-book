@@ -1,6 +1,7 @@
+import type { ReactElement } from 'react'
 import { useThemeStore, type ThemeMode } from '../store/useThemeStore'
 
-const OPTIONS: { mode: ThemeMode; label: string; icon: JSX.Element }[] = [
+const OPTIONS: { mode: ThemeMode; label: string; icon: ReactElement }[] = [
   {
     mode: 'light',
     label: '라이트',

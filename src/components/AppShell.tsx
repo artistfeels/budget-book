@@ -4,6 +4,7 @@ import BottomNav from './BottomNav'
 import BrandMark from './BrandMark'
 import { CalendarIcon, ChartIcon, DashboardIcon, ImportIcon, ListIcon } from './NavIcons'
 import ThemeToggle from './ThemeToggle'
+import SettingsMenu from './SettingsMenu'
 import { supabase } from '../lib/supabase'
 
 // Exported so BottomNav renders exactly the same destinations in the same order as the desktop nav —
@@ -115,6 +116,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />
+            <SettingsMenu />
             <button
               type="button"
               onClick={() => {

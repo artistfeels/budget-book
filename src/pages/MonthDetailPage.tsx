@@ -4,6 +4,7 @@ import { listAvailableMonths, summarizeByMonth } from '../lib/aggregations'
 import { shiftMonth } from '../lib/month'
 import { latestMonthWithSpending } from '../lib/analyticsAggregations'
 import { useTransactionStore } from '../store/useTransactionStore'
+import { usePreferencesStore } from '../store/usePreferencesStore'
 import CalendarGrid from '../components/month/CalendarGrid'
 import SpendingPaceChart from '../components/month/SpendingPaceChart'
 import MonthSummaryCard from '../components/month/MonthSummaryCard'
@@ -16,6 +17,8 @@ export default function MonthDetailPage() {
   const navigate = useNavigate()
   const transactions = useTransactionStore((s) => s.transactions)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  const showReportButton = usePreferencesStore((s) => s.showReportButton)
+  const [exporting, setExporting] = useState(false)
 
   const availableMonths = useMemo(() => listAvailableMonths(transactions), [transactions])
   const monthlySummaries = useMemo(() => summarizeByMonth(transactions), [transactions])
@@ -43,17 +46,53 @@ export default function MonthDetailPage() {
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 md:mb-8">
         <h1 className="page-title animate-fade-up">월간 상세</h1>
-        <select
-          value={month}
-          onChange={(e) => navigate(`/monthly/${e.target.value}`)}
-          className="field animate-fade-up stagger-1 font-medium"
-        >
-          {[...availableMonths].reverse().map((m) => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </select>
+        <div className="animate-fade-up stagger-1 flex items-center gap-2">
+          {showReportButton && (
+            <button
+              type="button"
+              disabled={exporting}
+              onClick={async () => {
+                setExporting(true)
+                try {
+                  const { exportMonthlyReport } = await import('../lib/report')
+                  await exportMonthlyReport(transactions, month)
+                } catch (error) {
+                  console.error('Failed to export report:', error)
+                  window.alert('리포트를 만들지 못했습니다. 잠시 후 다시 시도해주세요.')
+                } finally {
+                  setExporting(false)
+                }
+              }}
+              title="이 달의 요약·카테고리·이상 지출·거래 내역을 엑셀로 저장 (설정에서 숨길 수 있어요)"
+              className="btn-ghost inline-flex min-h-11 items-center gap-1.5 border border-black/[0.08] md:min-h-0 dark:border-white/[0.1]"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+              </svg>
+              {exporting ? '만드는 중…' : '리포트'}
+            </button>
+          )}
+          <select
+            value={month}
+            onChange={(e) => navigate(`/monthly/${e.target.value}`)}
+            className="field font-medium"
+          >
+            {[...availableMonths].reverse().map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <MonthSummaryCard current={monthSummary} previous={monthPreviousSummary} />

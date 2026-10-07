@@ -8,7 +8,7 @@ const FOCUSABLE =
  * the dialog, the page behind stops scrolling, and focus moves in on open and back to whatever
  * opened it on close — so keyboard and screen-reader users never land behind the overlay.
  */
-export function useDialog(dialogRef: RefObject<HTMLElement>, onClose: () => void) {
+export function useDialog(dialogRef: RefObject<HTMLElement | null>, onClose: () => void) {
   // Callers pass inline arrows; keeping the latest one in a ref lets the effect run once per open
   // instead of re-running (and yanking focus back to the first control) on every parent render.
   const onCloseRef = useRef(onClose)

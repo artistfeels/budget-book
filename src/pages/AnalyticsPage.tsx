@@ -6,6 +6,7 @@ import InsightFeed from '../components/analytics/InsightFeed'
 import WeekdayChart from '../components/analytics/WeekdayChart'
 import HourBucketChart from '../components/analytics/HourBucketChart'
 import CategoryTrendRanking from '../components/analytics/CategoryTrendRanking'
+import AnomalyCard from '../components/analytics/AnomalyCard'
 import SubscriptionList from '../components/analytics/SubscriptionList'
 import CategoryHeatmap from '../components/dashboard/CategoryHeatmap'
 import TopMerchants from '../components/dashboard/TopMerchants'
@@ -80,16 +81,17 @@ export default function AnalyticsPage() {
               </option>
             ))}
           </select>
-          <div className="-mx-1 w-full overflow-x-auto px-1 md:mx-0 md:w-auto md:overflow-visible md:px-0">
-            <div className="segmented">
+          <div className="w-full md:w-auto">
+            <div className="segmented grid w-full grid-cols-4 md:inline-flex md:w-auto">
               {PERIOD_OPTIONS.map((p) => (
                 <button
                   key={p.value}
                   onClick={() => setPeriod(p.value)}
                   aria-pressed={period === p.value}
-                  className={`btn-ghost whitespace-nowrap ${period === p.value ? 'btn-ghost-active' : ''}`}
+                  className={`btn-ghost whitespace-nowrap px-2 md:px-4 ${period === p.value ? 'btn-ghost-active' : ''}`}
                 >
-                  {p.label}
+                  <span className="hidden sm:inline">최근 </span>
+{p.label.replace('최근 ', '')}
                 </button>
               ))}
             </div>
@@ -97,8 +99,10 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
         <InsightFeed insights={insights} />
+        {/* Full history, not periodTransactions — the baseline needs the months before `month`. */}
+        <AnomalyCard transactions={transactions} month={month} />
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2">

@@ -53,18 +53,19 @@ export default function DashboardPage() {
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 md:mb-8">
         <h1 className="page-title animate-fade-up">대시보드</h1>
-        {/* Full width below md so the control drops to its own row, and scrolls sideways rather
-            than wrapping each label onto two lines. */}
-        <div className="animate-fade-up stagger-1 -mx-1 w-full overflow-x-auto px-1 md:mx-0 md:w-auto md:overflow-visible md:px-0">
-          <div className="segmented">
+        {/* Full width below md: four equal cells (the "최근" prefix drops on phones) so every option,
+            including the default 12개월, is visible without sideways scrolling. */}
+        <div className="animate-fade-up stagger-1 w-full md:w-auto">
+          <div className="segmented grid w-full grid-cols-4 md:inline-flex md:w-auto">
             {PERIOD_OPTIONS.map((p) => (
               <button
                 key={p.value}
                 onClick={() => setPeriod(p.value)}
                 aria-pressed={period === p.value}
-                className={`btn-ghost whitespace-nowrap ${period === p.value ? 'btn-ghost-active' : ''}`}
+                className={`btn-ghost whitespace-nowrap px-2 md:px-4 ${period === p.value ? 'btn-ghost-active' : ''}`}
               >
-                {p.label}
+                <span className="hidden sm:inline">최근 </span>
+{p.label.replace('최근 ', '')}
               </button>
             ))}
           </div>
