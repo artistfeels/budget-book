@@ -29,7 +29,7 @@ export default function SubscriptionList({ transactions }: SubscriptionListProps
               {subscriptions.map((s) => (
                 <tr
                   key={`${s.merchant}-${s.amount}`}
-                  className="border-b border-black/[0.04] text-slate-700 transition-colors duration-150 last:border-0 hover:bg-black/[0.02] dark:border-white/[0.05] dark:text-slate-200 dark:hover:bg-white/[0.03]"
+                  className="border-b border-black/[0.04] text-slate-700 transition-colors duration-200 last:border-0 hover:bg-black/[0.02] dark:border-white/[0.05] dark:text-slate-200 dark:hover:bg-white/[0.03]"
                 >
                   <td className="py-2">{s.merchant}</td>
                   <td className="py-2 text-right tabular-nums">{formatKRW(s.amount)}</td>

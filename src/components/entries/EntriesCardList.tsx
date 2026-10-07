@@ -62,7 +62,7 @@ export default function EntriesCardList({
         <button
           onClick={onBulkDelete}
           disabled={selectedIds.size === 0}
-          className="min-h-11 shrink-0 rounded-full bg-rose-500/10 px-4 text-sm font-medium text-rose-600 transition-all duration-200 ease-spring active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 dark:text-rose-400"
+          className="min-h-11 shrink-0 rounded-full bg-rose-500/10 px-4 text-sm font-medium text-rose-600 transition-all duration-[250ms] ease-spring active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 dark:text-rose-400"
         >
           선택 삭제 ({selectedIds.size})
         </button>
@@ -107,7 +107,7 @@ export default function EntriesCardList({
 
       <button
         onClick={onStartDraft}
-        className="mt-4 w-full rounded-xl border border-dashed border-black/[0.12] py-3 text-sm text-slate-500 transition-all duration-200 ease-spring active:scale-[0.99] dark:border-white/[0.12] dark:text-slate-400"
+        className="mt-4 w-full rounded-xl border border-dashed border-black/[0.12] py-3 text-sm text-slate-500 transition-all duration-[250ms] ease-spring active:scale-[0.99] dark:border-white/[0.12] dark:text-slate-400"
       >
         + 추가
       </button>

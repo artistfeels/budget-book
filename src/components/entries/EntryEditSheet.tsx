@@ -40,7 +40,7 @@ export default function EntryEditSheet({
     <div className="flex items-center gap-2">
       <button
         onClick={onDelete}
-        className="rounded-full bg-rose-500/10 px-4 py-2 text-sm font-medium text-rose-600 transition-all duration-200 ease-spring active:scale-[0.97] dark:text-rose-400"
+        className="rounded-full bg-rose-500/10 px-4 py-2 text-sm font-medium text-rose-600 transition-all duration-[250ms] ease-spring active:scale-[0.97] dark:text-rose-400"
       >
         삭제
       </button>

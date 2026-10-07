@@ -63,12 +63,14 @@ export default {
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
+      // Entrances run slow enough to read as a settle rather than a blink; the spring curve still
+      // front-loads most of the movement, so content is legible well before the animation ends.
       animation: {
-        'fade-up': 'fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both',
-        'fade-in': 'fade-in 0.4s ease-out both',
-        'scale-in': 'scale-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both',
-        'slide-in-right': 'slide-in-right 0.4s cubic-bezier(0.22, 1, 0.36, 1) both',
-        'slide-up': 'slide-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both',
+        'fade-up': 'fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both',
+        'fade-in': 'fade-in 0.6s ease-out both',
+        'scale-in': 'scale-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both',
+        'slide-in-right': 'slide-in-right 0.55s cubic-bezier(0.22, 1, 0.36, 1) both',
+        'slide-up': 'slide-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both',
       },
     },
   },

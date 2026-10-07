@@ -85,7 +85,7 @@ export default function CalendarGrid({ transactions, month, onDayClick }: Calend
                     aria-label={label}
                     // Amounts do not fit a ~44px cell, so on phones the cell carries only the date
                     // and its spending tint; the figures live in the day detail sheet a tap away.
-                    className="min-h-[44px] rounded-lg p-1.5 text-center text-xs tabular-nums transition-all duration-200 ease-spring hover:scale-[1.04] hover:ring-2 hover:ring-accent/40 md:min-h-0 md:p-2 md:text-left"
+                    className="min-h-[44px] rounded-lg p-1.5 text-center text-xs tabular-nums transition-all duration-[250ms] ease-spring hover:scale-[1.04] hover:ring-2 hover:ring-accent/40 md:min-h-0 md:p-2 md:text-left"
                     style={{ backgroundColor: intensity > 0 ? `rgba(225, 29, 72, ${intensity})` : 'transparent' }}
                   >
                     {/* Darkest ink on tinted cells keeps the date legible against the heaviest red. */}

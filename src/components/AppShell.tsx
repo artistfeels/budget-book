@@ -83,7 +83,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             <span
               aria-hidden="true"
               className={`pointer-events-none absolute inset-y-1 left-0 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-white/[0.14] ${
-                hasSettled ? 'transition-[transform,width,opacity] duration-500 ease-spring' : ''
+                hasSettled ? 'transition-[transform,width,opacity] duration-[650ms] ease-spring' : ''
               } ${indicator ? 'opacity-100' : 'opacity-0'}`}
               style={
                 indicator ? { transform: `translateX(${indicator.left}px)`, width: `${indicator.width}px` } : undefined

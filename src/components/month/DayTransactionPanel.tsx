@@ -57,7 +57,7 @@ export default function DayTransactionPanel({ date, transactions, onClose }: Day
             {dayTransactions.map((t) => (
               <li
                 key={t.id}
-                className="rounded-xl border border-black/[0.06] p-3.5 text-sm transition-colors duration-150 hover:bg-black/[0.02] dark:border-white/[0.07] dark:hover:bg-white/[0.03]"
+                className="rounded-xl border border-black/[0.06] p-3.5 text-sm transition-colors duration-200 hover:bg-black/[0.02] dark:border-white/[0.07] dark:hover:bg-white/[0.03]"
               >
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-medium text-slate-800 dark:text-slate-100">{t.content}</span>

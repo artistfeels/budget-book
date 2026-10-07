@@ -15,7 +15,7 @@ export default function BottomNav() {
             to={to}
             end={end}
             className={({ isActive }) =>
-              `flex flex-1 flex-col items-center gap-1 py-2 transition-colors duration-200 ${
+              `flex flex-1 flex-col items-center gap-1 py-2 transition-colors duration-[250ms] ${
                 isActive
                   ? 'text-accent dark:text-accent-light'
                   : 'text-slate-500 active:text-slate-800 dark:text-slate-400 dark:active:text-slate-100'

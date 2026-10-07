@@ -189,7 +189,7 @@ export default function ImportPage() {
             {months.map((month) => (
               <label
                 key={month}
-                className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm transition-all duration-200 ease-spring has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent md:min-h-0 md:py-1.5 ${
+                className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm transition-all duration-[250ms] ease-spring has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent md:min-h-0 md:py-1.5 ${
                   selectedMonths.has(month)
                     ? 'border-accent/40 bg-accent/10 text-accent dark:border-accent-light/40 dark:bg-accent-light/10 dark:text-accent-light'
                     : 'border-black/[0.08] text-slate-500 hover:bg-black/[0.03] dark:border-white/[0.1] dark:text-slate-400 dark:hover:bg-white/[0.05]'
@@ -258,7 +258,7 @@ export default function ImportPage() {
             stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
-            className="h-3.5 w-3.5 transition-transform duration-200 group-open:rotate-90"
+            className="h-3.5 w-3.5 transition-transform duration-[250ms] group-open:rotate-90"
             aria-hidden="true"
           >
             <path d="M9 6l6 6-6 6" />

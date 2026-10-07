@@ -134,7 +134,7 @@ export default function EntriesTable({
         <button
           onClick={onBulkDelete}
           disabled={selectedIds.size === 0}
-          className="rounded-full bg-rose-500/10 px-4 py-1.5 text-sm font-medium text-rose-600 transition-all duration-200 ease-spring hover:bg-rose-500/20 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 dark:text-rose-400"
+          className="rounded-full bg-rose-500/10 px-4 py-1.5 text-sm font-medium text-rose-600 transition-all duration-[250ms] ease-spring hover:bg-rose-500/20 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 dark:text-rose-400"
         >
           선택 삭제 ({selectedIds.size})
         </button>
@@ -166,7 +166,7 @@ export default function EntriesTable({
           {rows.map((row) => (
             <tr
               key={row.id}
-              className="border-b border-black/[0.04] transition-colors duration-150 last:border-0 hover:bg-black/[0.02] dark:border-white/[0.05] dark:hover:bg-white/[0.03]"
+              className="border-b border-black/[0.04] transition-colors duration-200 last:border-0 hover:bg-black/[0.02] dark:border-white/[0.05] dark:hover:bg-white/[0.03]"
             >
               <td className="py-1.5">
                 <input type="checkbox" checked={selectedIds.has(row.id)} onChange={() => onToggleSelect(row.id)} />
@@ -223,7 +223,7 @@ export default function EntriesTable({
       {!draftRow && (
         <button
           onClick={onStartDraft}
-          className="mt-4 w-full rounded-xl border border-dashed border-black/[0.12] py-2.5 text-sm text-slate-500 transition-all duration-200 ease-spring hover:border-accent/40 hover:bg-accent/[0.04] hover:text-accent dark:border-white/[0.12] dark:text-slate-400 dark:hover:border-accent-light/40 dark:hover:bg-accent-light/[0.06] dark:hover:text-accent-light"
+          className="mt-4 w-full rounded-xl border border-dashed border-black/[0.12] py-2.5 text-sm text-slate-500 transition-all duration-[250ms] ease-spring hover:border-accent/40 hover:bg-accent/[0.04] hover:text-accent dark:border-white/[0.12] dark:text-slate-400 dark:hover:border-accent-light/40 dark:hover:bg-accent-light/[0.06] dark:hover:text-accent-light"
         >
           + 추가
         </button>

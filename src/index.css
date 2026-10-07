@@ -104,7 +104,7 @@
 
   .btn-primary {
     @apply rounded-full bg-accent px-5 py-2 text-sm font-medium text-white
-      transition-all duration-200 ease-spring
+      transition-all duration-[250ms] ease-spring
       hover:bg-accent-dark hover:shadow-[0_4px_16px_-4px_rgba(180,83,9,0.45)]
       active:scale-[0.97]
       disabled:pointer-events-none disabled:opacity-40
@@ -114,7 +114,7 @@
   /* Neutral pill used for segmented controls and secondary actions. */
   .btn-ghost {
     @apply rounded-full px-4 py-1.5 text-sm font-medium text-slate-500
-      transition-all duration-200 ease-spring
+      transition-all duration-[250ms] ease-spring
       hover:bg-black/[0.04] hover:text-slate-900
       active:scale-[0.97]
       dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-100;
@@ -135,7 +135,7 @@
      into every cell. */
   .field {
     @apply min-h-11 rounded-lg border border-black/[0.08] bg-white/60 px-3 py-1.5 text-sm text-slate-900 md:min-h-0
-      transition-colors duration-200
+      transition-colors duration-[250ms]
       focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30
       dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-slate-100
       dark:placeholder:text-slate-500 dark:focus:border-accent-light dark:focus:ring-accent-light/30;
@@ -160,21 +160,21 @@
   /* Entrance stagger: siblings animate in sequence rather than all at once, which is what makes
      a grid of cards feel like it assembles instead of blinking into place. */
   .stagger-1 {
-    animation-delay: 40ms;
+    animation-delay: 70ms;
   }
   .stagger-2 {
-    animation-delay: 80ms;
+    animation-delay: 140ms;
   }
   .stagger-3 {
-    animation-delay: 120ms;
+    animation-delay: 210ms;
   }
   .stagger-4 {
-    animation-delay: 160ms;
+    animation-delay: 280ms;
   }
   .stagger-5 {
-    animation-delay: 200ms;
+    animation-delay: 350ms;
   }
   .stagger-6 {
-    animation-delay: 240ms;
+    animation-delay: 420ms;
   }
 }
