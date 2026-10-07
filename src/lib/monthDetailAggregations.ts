@@ -1,5 +1,6 @@
 import type { Transaction } from '../types/transaction'
 import { resolvedFlowType } from './aggregations'
+import { elapsedDaysInMonth, shiftMonth } from './month'
 
 export interface DailySummary {
   date: string
@@ -88,12 +89,6 @@ export interface SpendingPaceResult {
   asOfDay: number
   projectedMonthEndTotal: number
   percentVsLastMonthSameDay: number | null
-}
-
-function shiftMonth(month: string, delta: number): string {
-  const [y, m] = month.split('-').map(Number)
-  const date = new Date(y, m - 1 + delta, 1)
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 }
 
 export function spendingPaceSeries(transactions: Transaction[], month: string, asOfDay: number): SpendingPaceResult {
@@ -236,8 +231,11 @@ export interface MonthInfographics {
   noSpendDayCount: number
 }
 
-export function monthInfographics(transactions: Transaction[], month: string): MonthInfographics {
-  const daily = dailySummaries(transactions, month)
+export function monthInfographics(transactions: Transaction[], month: string, today: Date = new Date()): MonthInfographics {
+  // Only days that have already happened count toward the average and the no-spend tally —
+  // otherwise on the 5th the remaining ~26 future days would read as "no-spend" and dilute the average.
+  const elapsedDays = elapsedDaysInMonth(month, today)
+  const daily = dailySummaries(transactions, month).slice(0, elapsedDays)
   const monthSpendingTx = transactions.filter((t) => t.date.slice(0, 7) === month && resolvedFlowType(t) === 'spending')
 
   const biggestDay = [...daily].filter((d) => d.spending > 0).sort((a, b) => b.spending - a.spending)[0]

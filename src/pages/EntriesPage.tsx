@@ -20,7 +20,6 @@ import {
   type SortDirection,
   type SortField,
 } from '../lib/entriesLogic'
-import { computeTransactionId } from '../lib/idHash'
 import {
   SEED_EXPENSE_CATEGORIES,
   SEED_INCOME_CATEGORIES,
@@ -60,6 +59,7 @@ export default function EntriesPage() {
   const transactions = useTransactionStore((s) => s.transactions)
   const updateTransaction = useTransactionStore((s) => s.updateTransaction)
   const deleteTransaction = useTransactionStore((s) => s.deleteTransaction)
+  const deleteTransactions = useTransactionStore((s) => s.deleteTransactions)
   const addTransaction = useTransactionStore((s) => s.addTransaction)
   const setOverride = useTransactionStore((s) => s.setOverride)
   const isDesktop = useMediaQuery('(min-width: 768px)')
@@ -239,19 +239,15 @@ export default function EntriesPage() {
 
   async function handleDraftSave() {
     if (!draft) return
-    if (!draft.content.trim() || draft.amount === 0) return
-    const id = await computeTransactionId({
-      date: draft.date,
-      time: draft.time,
-      type: draft.type,
-      category: draft.category,
-      subcategory: draft.subcategory,
-      content: draft.content,
-      amount: draft.amount,
-      paymentMethod: draft.paymentMethod,
-    })
+    if (!draft.content.trim() || draft.amount === 0) {
+      setError('내용과 금액을 입력해주세요.')
+      return
+    }
+    // Manual entries get a random id, not the content hash imports use: two genuinely separate
+    // purchases with the same date, place and amount (two coffees on one day) would otherwise
+    // hash to the same primary key and the second one could never be saved.
     try {
-      await addTransaction({ ...draft, id })
+      await addTransaction({ ...draft, id: crypto.randomUUID() })
       setDraft(null)
       setError(null)
     } catch (err) {
@@ -283,13 +279,12 @@ export default function EntriesPage() {
     }
     if (!window.confirm(`선택한 ${ids.length}건을 삭제하시겠습니까?`)) return
 
-    const results = await Promise.allSettled(ids.map((id) => deleteTransaction(id)))
-    setSelectedIds(new Set())
-    const failed = results.filter((r) => r.status === 'rejected').length
-    if (failed > 0) {
-      setError(`삭제에 실패했습니다: ${ids.length}건 중 ${ids.length - failed}건 삭제, ${failed}건 실패했습니다.`)
-    } else {
+    try {
+      await deleteTransactions(ids)
+      setSelectedIds(new Set())
       setError(null)
+    } catch (err) {
+      setError(`삭제에 실패했습니다: ${errorText(err)}`)
     }
   }
 

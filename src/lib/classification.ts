@@ -32,26 +32,12 @@ export function classifyFlowType(input: ClassificationInput, rules: Classificati
     return 'neutral'
   }
 
-  if (input.type === '이체' && input.category === '투자') {
-    return 'neutral'
-  }
-
   if (input.type === '지출' && input.category === '금융' && input.subcategory === '증권/투자') {
     return 'neutral'
   }
 
-  if (input.type === '이체' && input.category === '카드대금') {
-    return 'neutral'
-  }
-
-  if (input.type === '이체' && input.isPairedTransfer) {
-    return 'neutral'
-  }
-
-  if (input.type === '이체' && input.isUnmatchedTransfer) {
-    return 'neutral'
-  }
-
+  // Every transfer (투자, 카드대금, paired or unmatched 내계좌이체, …) moves money between the
+  // user's own accounts or into investments, so none of it is income or spending.
   if (input.type === '이체') {
     return 'neutral'
   }

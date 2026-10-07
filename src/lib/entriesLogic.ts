@@ -1,5 +1,6 @@
 import type { Transaction } from '../types/transaction'
 import { resolvedFlowType } from './aggregations'
+import { currentMonthKey } from './month'
 
 export type EntrySection = 'income' | 'spending'
 
@@ -44,10 +45,7 @@ export function isPartialMonth(allTransactions: Transaction[], month: string): b
   return false
 }
 
-/** `YYYY-MM` key for a Date — the month-key convention used across the app. */
-export function currentMonthKey(today: Date): string {
-  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
-}
+export { currentMonthKey }
 
 export function defaultDateForMonth(month: string, today: Date): string {
   const todayMonth = currentMonthKey(today)
@@ -60,7 +58,10 @@ export function defaultDateForMonth(month: string, today: Date): string {
 export function searchEntries(transactions: Transaction[], query: string): Transaction[] {
   const q = query.trim().toLowerCase()
   if (!q) return transactions
-  return transactions.filter((t) => t.content.toLowerCase().includes(q) || (t.memo ?? '').toLowerCase().includes(q))
+  // Matches every text field a person might remember a purchase by, not just the merchant name.
+  return transactions.filter((t) =>
+    [t.content, t.memo ?? '', t.category, t.subcategory, t.paymentMethod].some((field) => field.toLowerCase().includes(q))
+  )
 }
 
 export type SortField = 'date' | 'amount'

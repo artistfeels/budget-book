@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { listAvailableMonths, summarizeByMonth } from '../lib/aggregations'
+import { shiftMonth } from '../lib/month'
 import { latestMonthWithSpending } from '../lib/analyticsAggregations'
 import { useTransactionStore } from '../store/useTransactionStore'
 import CalendarGrid from '../components/month/CalendarGrid'
@@ -9,12 +10,6 @@ import MonthSummaryCard from '../components/month/MonthSummaryCard'
 import MonthInfographics from '../components/month/MonthInfographics'
 import MonthCategoryChart from '../components/dashboard/MonthCategoryChart'
 import DayTransactionPanel from '../components/month/DayTransactionPanel'
-
-function shiftMonth(month: string, delta: number): string {
-  const [y, m] = month.split('-').map(Number)
-  const date = new Date(y, m - 1 + delta, 1)
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-}
 
 export default function MonthDetailPage() {
   const { yyyyMm } = useParams<{ yyyyMm: string }>()

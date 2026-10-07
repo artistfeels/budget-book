@@ -4,6 +4,7 @@ import BottomNav from './BottomNav'
 import BrandMark from './BrandMark'
 import { CalendarIcon, ChartIcon, DashboardIcon, ImportIcon, ListIcon } from './NavIcons'
 import ThemeToggle from './ThemeToggle'
+import { supabase } from '../lib/supabase'
 
 // Exported so BottomNav renders exactly the same destinations in the same order as the desktop nav —
 // two hand-maintained lists would drift.
@@ -112,8 +113,30 @@ export default function AppShell({ children }: { children: ReactNode }) {
             ))}
           </nav>
 
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('로그아웃할까요?')) supabase.auth.signOut()
+              }}
+              title="로그아웃"
+              aria-label="로그아웃"
+              className="btn-ghost px-2.5 py-1.5"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+              </svg>
+            </button>
           </div>
         </div>
       </header>

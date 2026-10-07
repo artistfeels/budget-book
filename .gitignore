@@ -6,3 +6,8 @@ data/
 *.log
 .vercel
 .env*
+
+# tsc -b build byproducts
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts

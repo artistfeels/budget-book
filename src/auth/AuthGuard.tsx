@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { useTransactionStore } from '../store/useTransactionStore'
 import LoginPage from './LoginPage'
 
 export default function AuthGuard({ children }: { children: ReactNode }) {
@@ -8,7 +9,8 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (event === 'SIGNED_OUT') useTransactionStore.getState().reset()
       setSession(newSession)
     })
     return () => listener.subscription.unsubscribe()

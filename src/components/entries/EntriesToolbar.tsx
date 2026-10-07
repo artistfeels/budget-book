@@ -80,7 +80,7 @@ export default function EntriesToolbar({
           type="text"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="내용/메모 검색"
+          placeholder="내용·메모·분류·결제수단 검색"
           className="field w-full md:w-auto"
         />
 

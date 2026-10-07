@@ -67,7 +67,7 @@ function transactionToRow(t: Transaction): TransactionRow {
   }
 }
 
-async function recomputeTransferPairing(transactions: Transaction[]): Promise<Map<string, Partial<Transaction>>> {
+function recomputeTransferPairing(transactions: Transaction[]): Map<string, Partial<Transaction>> {
   const internal = transactions.filter((t) => t.type === '이체' && t.category === '내계좌이체')
   const candidates: TransferCandidate[] = internal.map((t) => ({
     id: t.id,
@@ -88,15 +88,51 @@ async function recomputeTransferPairing(transactions: Transaction[]): Promise<Ma
   return patches
 }
 
+async function loadAll(): Promise<{ transactions: Transaction[]; rules: ClassificationRule[] }> {
+  // PostgREST caps a single response at 1000 rows by default. Without paging through
+  // .range(), any account with more than 1000 transactions silently loses the rows past
+  // the cap on every load — nothing is deleted server-side, they just never arrive here.
+  const pageSize = 1000
+  const txRows: TransactionRow[] = []
+  let offset = 0
+  while (true) {
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .range(offset, offset + pageSize - 1)
+    if (error) throw error
+    txRows.push(...(data ?? []))
+    if (!data || data.length < pageSize) break
+    offset += pageSize
+  }
+
+  const { data: ruleRows, error: ruleError } = await supabase.from('classification_rules').select('*')
+  if (ruleError) throw ruleError
+
+  const rules: ClassificationRule[] = (ruleRows ?? []).map((r) => ({
+    id: r.id,
+    matchType: r.match_type,
+    matchValue: r.match_value,
+    flowType: r.flow_type,
+  }))
+
+  return { transactions: txRows.map(rowToTransaction), rules }
+}
+
 interface TransactionStoreState {
   transactions: Transaction[]
   rules: ClassificationRule[]
+  /** True while a load is in flight (and before the first one) — lets pages tell "still loading" apart from "no data". */
   loading: boolean
+  loadError: string | null
   fetchAll: () => Promise<void>
+  /** Drops everything held in memory — called on sign-out so the next account never sees it. */
+  reset: () => void
   importRows: (rows: ParsedRawRow[]) => Promise<{ inserted: number; duplicates: number }>
   addTransaction: (transaction: Transaction) => Promise<void>
   updateTransaction: (id: string, patch: Partial<Transaction>) => Promise<void>
   deleteTransaction: (id: string) => Promise<void>
+  deleteTransactions: (ids: string[]) => Promise<void>
   setOverride: (id: string, override: 'spending' | 'neutral' | null) => Promise<void>
   addRule: (rule: Omit<ClassificationRule, 'id'>) => Promise<void>
 }
@@ -104,44 +140,28 @@ interface TransactionStoreState {
 export const useTransactionStore = create<TransactionStoreState>((set, get) => ({
   transactions: [],
   rules: [],
-  loading: false,
+  loading: true,
+  loadError: null,
 
   async fetchAll() {
-    set({ loading: true })
-
-    // PostgREST caps a single response at 1000 rows by default. Without paging through
-    // .range(), any account with more than 1000 transactions silently loses the rows past
-    // the cap on every load — nothing is deleted server-side, they just never arrive here.
-    const pageSize = 1000
-    const txRows: TransactionRow[] = []
-    let offset = 0
-    while (true) {
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .range(offset, offset + pageSize - 1)
-      if (error) throw error
-      txRows.push(...(data ?? []))
-      if (!data || data.length < pageSize) break
-      offset += pageSize
+    set({ loading: true, loadError: null })
+    try {
+      set(await loadAll())
+    } catch (err) {
+      set({ loadError: err instanceof Error ? err.message : String(err) })
+      throw err
+    } finally {
+      set({ loading: false })
     }
+  },
 
-    const { data: ruleRows, error: ruleError } = await supabase.from('classification_rules').select('*')
-    if (ruleError) throw ruleError
-
-    const rules: ClassificationRule[] = (ruleRows ?? []).map((r) => ({
-      id: r.id,
-      matchType: r.match_type,
-      matchValue: r.match_value,
-      flowType: r.flow_type,
-    }))
-
-    const transactions = txRows.map(rowToTransaction)
-    set({ transactions, rules, loading: false })
+  reset() {
+    set({ transactions: [], rules: [], loading: true, loadError: null })
   },
 
   async importRows(rows) {
-    const existingIds = new Set(get().transactions.map((t) => t.id))
+    const existing = get().transactions
+    const existingById = new Map(existing.map((t) => [t.id, t]))
     const rules = get().rules
 
     const withIds = await Promise.all(
@@ -172,7 +192,7 @@ export const useTransactionStore = create<TransactionStoreState>((set, get) => (
       return true
     })
 
-    const newOnes = dedupedWithIds.filter(({ id }) => !existingIds.has(id))
+    const newOnes = dedupedWithIds.filter(({ id }) => !existingById.has(id))
     const duplicates = withIds.length - newOnes.length
 
     const newTransactions: Transaction[] = newOnes.map(({ row, id }) => ({
@@ -194,8 +214,8 @@ export const useTransactionStore = create<TransactionStoreState>((set, get) => (
       isUnmatchedTransfer: false,
     }))
 
-    const allTransactions = [...get().transactions, ...newTransactions]
-    const pairingPatches = await recomputeTransferPairing(allTransactions)
+    const allTransactions = [...existing, ...newTransactions]
+    const pairingPatches = recomputeTransferPairing(allTransactions)
 
     const finalized = allTransactions.map((t) => {
       const patch = pairingPatches.get(t.id) ?? {
@@ -225,8 +245,20 @@ export const useTransactionStore = create<TransactionStoreState>((set, get) => (
       return merged
     })
 
-    if (finalized.length > 0) {
-      const { error } = await supabase.from('transactions').upsert(finalized.map(transactionToRow))
+    // Only write rows that are new or whose derived fields actually moved — re-sending the whole
+    // table on every import grows with history and risks request-size limits for no benefit.
+    const changed = finalized.filter((t) => {
+      const before = existingById.get(t.id)
+      return (
+        !before ||
+        before.flowType !== t.flowType ||
+        before.transferPairId !== t.transferPairId ||
+        before.isPairedTransfer !== t.isPairedTransfer ||
+        before.isUnmatchedTransfer !== t.isUnmatchedTransfer
+      )
+    })
+    if (changed.length > 0) {
+      const { error } = await supabase.from('transactions').upsert(changed.map(transactionToRow))
       if (error) throw error
     }
 
@@ -261,6 +293,14 @@ export const useTransactionStore = create<TransactionStoreState>((set, get) => (
     const { error } = await supabase.from('transactions').delete().eq('id', id)
     if (error) throw error
     set({ transactions: get().transactions.filter((t) => t.id !== id) })
+  },
+
+  async deleteTransactions(ids) {
+    if (ids.length === 0) return
+    const { error } = await supabase.from('transactions').delete().in('id', ids)
+    if (error) throw error
+    const removed = new Set(ids)
+    set({ transactions: get().transactions.filter((t) => !removed.has(t.id)) })
   },
 
   async setOverride(id, override) {

@@ -2,6 +2,7 @@ import type { Transaction } from '../types/transaction'
 import type { MonthlySummary } from './aggregations'
 import { resolvedFlowType } from './aggregations'
 import { formatKRW } from './format'
+import { shiftMonth } from './month'
 
 const WEEKDAY_LABELS = ['월', '화', '수', '목', '금', '토', '일']
 
@@ -143,13 +144,6 @@ export function pendingSubscriptionTotal(transactions: Transaction[], month: str
   const subscriptions = detectSubscriptions(transactions)
   const monthMerchants = new Set(transactions.filter((t) => t.date.slice(0, 7) === month).map((t) => t.content))
   return subscriptions.filter((s) => !monthMerchants.has(s.merchant)).reduce((sum, s) => sum + s.amount, 0)
-}
-
-// month-offset helper — same exact pattern as the unexported `shiftMonth` in monthDetailAggregations.ts.
-function shiftMonth(month: string, delta: number): string {
-  const [y, m] = month.split('-').map(Number)
-  const date = new Date(y, m - 1 + delta, 1)
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 }
 
 export interface CategoryTrend {

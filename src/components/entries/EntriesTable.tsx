@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Transaction } from '../../types/transaction'
 import { formatKRW } from '../../lib/format'
 import type { EntryColumnKey, SortDirection, SortField } from '../../lib/entriesLogic'
@@ -38,6 +39,33 @@ function resolveOptions(col: EntryColumnDef, row: Transaction): string[] {
   return col.options ?? []
 }
 
+// Text cells keep their own draft while focused and report one change on blur/Enter. Reporting
+// every keystroke would send a database write per character, and a failed write's rollback could
+// then overwrite characters typed after it.
+function CommitTextInput({ value, onCommit }: { value: string; onCommit: (value: string) => void }) {
+  const [draft, setDraft] = useState<string | null>(null)
+  return (
+    <input
+      type="text"
+      value={draft ?? value}
+      onFocus={() => setDraft(value)}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={() => {
+        if (draft !== null && draft !== value) onCommit(draft)
+        setDraft(null)
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur()
+        if (e.key === 'Escape') {
+          setDraft(value)
+          e.currentTarget.blur()
+        }
+      }}
+      className="field w-full px-2 py-1"
+    />
+  )
+}
+
 export function EditableCell({
   col,
   row,
@@ -58,14 +86,7 @@ export function EditableCell({
     )
   }
   if (col.type === 'text') {
-    return (
-      <input
-        type="text"
-        value={row.content}
-        onChange={(e) => onChange('content', e.target.value)}
-        className="field w-full px-2 py-1"
-      />
-    )
+    return <CommitTextInput value={row.content} onCommit={(value) => onChange('content', value)} />
   }
   if (col.type === 'select') {
     return (

@@ -4,6 +4,7 @@ import { blendSubscriptionProjection, spendingPaceSeries } from '../../lib/month
 import { detectSubscriptions } from '../../lib/analyticsAggregations'
 import { formatKRW, formatKRWCompact } from '../../lib/format'
 import { niceAxisTicks } from '../../lib/chartTicks'
+import { currentMonthKey, daysInMonth as daysInMonthOf } from '../../lib/month'
 import { useChartTheme } from '../../lib/useChartTheme'
 import { useMediaQuery } from '../../lib/useMediaQuery'
 import type { Transaction } from '../../types/transaction'
@@ -14,13 +15,11 @@ interface SpendingPaceChartProps {
 }
 
 export default function SpendingPaceChart({ transactions, month }: SpendingPaceChartProps) {
-  const [year, monthNum] = month.split('-').map(Number)
-  const daysInMonth = new Date(year, monthNum, 0).getDate()
+  const daysInMonth = daysInMonthOf(month)
   const now = new Date()
-  // Compare against a locally-derived month string, not toISOString() (UTC) — otherwise this
-  // mismatches with new Date().getDate() (local) for part of the day around month boundaries.
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  const isCurrentMonth = month === currentMonth
+  // Local month key, not toISOString() (UTC) — otherwise this mismatches with now.getDate()
+  // (local) for part of the day around month boundaries.
+  const isCurrentMonth = month === currentMonthKey(now)
   const asOfDay = isCurrentMonth ? now.getDate() : daysInMonth
 
   const result = useMemo(() => spendingPaceSeries(transactions, month, asOfDay), [transactions, month, asOfDay])

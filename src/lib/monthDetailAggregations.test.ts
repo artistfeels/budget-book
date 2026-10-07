@@ -341,6 +341,13 @@ describe('monthInfographics', () => {
     expect(result.mostFrequentMerchant).toBeNull()
     expect(result.noSpendDayCount).toBe(30)
   })
+
+  it('only counts days that have already happened when viewing the current month', () => {
+    const txs = [tx({ date: '2026-06-02', amount: -100000, category: '식비', subcategory: '한식', content: '식당' })]
+    const result = monthInfographics(txs, '2026-06', new Date(2026, 5, 5)) // June 5th
+    expect(result.dailyAverageSpending).toBe(20000) // 100,000 over 5 elapsed days, not 30
+    expect(result.noSpendDayCount).toBe(4) // days 1, 3, 4, 5 — not the 25 days still ahead
+  })
 })
 
 describe('spendingIntensity', () => {

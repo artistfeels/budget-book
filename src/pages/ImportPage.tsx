@@ -12,6 +12,7 @@ export default function ImportPage() {
   const importRows = useTransactionStore((s) => s.importRows)
 
   const [reclassifying, setReclassifying] = useState(false)
+  const [importing, setImporting] = useState(false)
 
   async function handleReclassifyAll() {
     setReclassifying(true)
@@ -56,8 +57,15 @@ export default function ImportPage() {
 
   async function handleImport() {
     const rowsToImport = parsedRows.filter((r) => selectedMonths.has(r.date.slice(0, 7)))
-    const result = await importRows(rowsToImport)
-    setSummary(result)
+    setImporting(true)
+    setError(null)
+    try {
+      setSummary(await importRows(rowsToImport))
+    } catch (e) {
+      setError(`불러오기에 실패했습니다: ${e instanceof Error ? e.message : String(e)}`)
+    } finally {
+      setImporting(false)
+    }
   }
 
   return (
@@ -111,8 +119,12 @@ export default function ImportPage() {
               </label>
             ))}
           </div>
-          <button onClick={handleImport} className="btn-primary">
-            선택한 월 불러오기
+          <button
+            onClick={handleImport}
+            disabled={importing || selectedMonths.size === 0}
+            className="btn-primary disabled:pointer-events-none disabled:opacity-40"
+          >
+            {importing ? '불러오는 중…' : '선택한 월 불러오기'}
           </button>
         </div>
       )}

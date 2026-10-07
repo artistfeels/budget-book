@@ -119,6 +119,12 @@ describe('searchEntries', () => {
     expect(searchEntries(txs, '생일').map((t) => t.id)).toEqual(['a'])
   })
 
+  it('matches category, subcategory and payment method too', () => {
+    const txs = [tx({ id: 'a', content: '스타벅스', category: '카페/간식', subcategory: '커피/음료', paymentMethod: '토스뱅크 통장' })]
+    expect(searchEntries(txs, '커피').map((t) => t.id)).toEqual(['a'])
+    expect(searchEntries(txs, '토스').map((t) => t.id)).toEqual(['a'])
+  })
+
   it('treats a null memo as empty rather than throwing', () => {
     const txs = [tx({ id: 'a', content: '스타벅스', memo: null })]
     expect(() => searchEntries(txs, '없음')).not.toThrow()
