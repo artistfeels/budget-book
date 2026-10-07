@@ -15,18 +15,25 @@ export default function MonthSummaryCard({ current, previous }: MonthSummaryCard
   if (!current) {
     return (
       <div className="card animate-fade-up p-4 md:p-6 text-sm text-slate-400 dark:text-slate-500">
-        이 달에는 거래가 없습니다.
+        이달에는 거래가 없어요.
       </div>
     )
   }
 
-  const netSaving = current.income - current.spending
-  const netChange = previous ? monthOverMonthChange(netSaving, previous.income - previous.spending) : null
+  // Income minus spending — named and colored like the dashboard's 순현금흐름 so the same number
+  // doesn't wear two names (it used to be '순저축' in savings-green here).
+  const netCashFlow = current.income - current.spending
+  const netChange = previous ? monthOverMonthChange(netCashFlow, previous.income - previous.spending) : null
+  const fmt = isDesktop ? formatKRW : formatManwon
 
   const items = [
-    { label: '수입', value: current.income, color: 'text-income' },
-    { label: '지출', value: current.spending, color: 'text-spending' },
-    { label: '순저축', value: netSaving, color: 'text-saving' },
+    { label: '수입', text: fmt(current.income), color: 'text-income' },
+    { label: '지출', text: fmt(current.spending), color: 'text-spending' },
+    {
+      label: '순현금흐름',
+      text: `${netCashFlow > 0 ? '+' : ''}${fmt(netCashFlow)}`,
+      color: 'text-slate-900 dark:text-white',
+    },
   ]
 
   return (
@@ -36,9 +43,9 @@ export default function MonthSummaryCard({ current, previous }: MonthSummaryCard
         {items.map((item) => (
           <div key={item.label} className="text-center">
             <p className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">{item.label}</p>
-            <p className={`text-base font-semibold tracking-[-0.02em] md:text-xl ${item.color}`}>
-              {isDesktop ? formatKRW(item.value) : formatManwon(item.value)}
-              {item.label === '순저축' && netChange !== null && (
+            <p className={`text-base font-semibold tracking-[-0.02em] tabular-nums md:text-xl ${item.color}`}>
+              {item.text}
+              {item.label === '순현금흐름' && netChange !== null && (
                 <span
                   className={`block text-xs font-medium md:ml-1.5 md:inline ${
                     netChange >= 0 ? 'text-saving' : 'text-spending'

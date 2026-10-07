@@ -53,7 +53,7 @@ export default function EntriesCardList({
               key={field}
               onClick={() => onSortChange(field)}
               aria-pressed={sortField === field}
-              className={`btn-ghost text-xs ${sortField === field ? 'btn-ghost-active' : ''}`}
+              className={`btn-ghost min-h-11 ${sortField === field ? 'btn-ghost-active' : ''}`}
             >
               {label} {sortField === field ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
             </button>
@@ -62,7 +62,7 @@ export default function EntriesCardList({
         <button
           onClick={onBulkDelete}
           disabled={selectedIds.size === 0}
-          className="shrink-0 rounded-full bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-600 transition-all duration-200 ease-spring active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 dark:text-rose-400"
+          className="min-h-11 shrink-0 rounded-full bg-rose-500/10 px-4 text-sm font-medium text-rose-600 transition-all duration-200 ease-spring active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 dark:text-rose-400"
         >
           선택 삭제 ({selectedIds.size})
         </button>
@@ -72,16 +72,19 @@ export default function EntriesCardList({
         {rows.map((row) => (
           <li
             key={row.id}
-            className="flex items-center gap-3 rounded-xl border border-black/[0.06] px-3 py-2.5 dark:border-white/[0.07]"
+            className="flex items-center gap-1 rounded-xl border border-black/[0.06] py-1 pl-0.5 pr-3 dark:border-white/[0.07]"
           >
-            <input
-              type="checkbox"
-              checked={selectedIds.has(row.id)}
-              onChange={() => onToggleSelect(row.id)}
-              aria-label={`${row.content} 선택`}
-              className="h-4 w-4 shrink-0"
-            />
-            <button onClick={() => setEditingId(row.id)} className="min-w-0 flex-1 text-left">
+            {/* The label is the 44px hit area; the checkbox itself stays a normal size. */}
+            <label className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center">
+              <input
+                type="checkbox"
+                checked={selectedIds.has(row.id)}
+                onChange={() => onToggleSelect(row.id)}
+                aria-label={`${row.content} 선택`}
+                className="h-5 w-5 accent-accent"
+              />
+            </label>
+            <button onClick={() => setEditingId(row.id)} className="min-w-0 flex-1 py-1.5 text-left">
               <div className="flex items-baseline justify-between gap-3">
                 <span className="truncate font-medium text-slate-800 dark:text-slate-100">
                   {row.content || '(내용 없음)'}
@@ -99,7 +102,7 @@ export default function EntriesCardList({
       </ul>
 
       {rows.length === 0 && (
-        <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">표시할 거래가 없습니다.</p>
+        <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">조건에 맞는 거래가 없어요.</p>
       )}
 
       <button

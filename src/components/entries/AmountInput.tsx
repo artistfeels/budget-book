@@ -25,7 +25,7 @@ export default function AmountInput({ value, onChange, className }: AmountInputP
         }}
         className={
           className ??
-          'w-full rounded-lg px-2 py-1 text-right text-sm tabular-nums transition-colors duration-150 hover:bg-black/[0.04] dark:text-slate-100 dark:hover:bg-white/[0.06]'
+          'min-h-11 w-full rounded-lg px-2 py-1 text-right md:min-h-0 text-sm tabular-nums transition-colors duration-150 hover:bg-black/[0.04] dark:text-slate-100 dark:hover:bg-white/[0.06]'
         }
       >
         {value.toLocaleString('ko-KR')}

@@ -27,3 +27,17 @@ export function elapsedDaysInMonth(month: string, today: Date): number {
   if (month > current) return 0
   return today.getDate()
 }
+
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
+
+/** `2026-09-15` → `9월 15일 (화)`: how a person reads a date, not how the database stores it. */
+export function formatDayLabel(date: string): string {
+  const [y, m, d] = date.split('-').map(Number)
+  return `${m}월 ${d}일 (${WEEKDAYS[new Date(y, m - 1, d).getDay()]})`
+}
+
+/** `2026-09` → `2026년 9월`. */
+export function formatMonthLabel(month: string): string {
+  const [y, m] = month.split('-').map(Number)
+  return `${y}년 ${m}월`
+}

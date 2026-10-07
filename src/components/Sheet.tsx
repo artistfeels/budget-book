@@ -1,5 +1,7 @@
-import { useEffect, type ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useDialog } from '../lib/useDialog'
+import CloseButton from './CloseButton'
 
 interface SheetProps {
   title: string
@@ -15,20 +17,8 @@ interface SheetProps {
  * temporary overlay, and the user loses track of where they were.
  */
 export default function Sheet({ title, onClose, children, footer }: SheetProps) {
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKeyDown)
-    // Locking the body prevents the page underneath from scrolling when the sheet's own content
-    // reaches its end — otherwise a flick inside the sheet drags the whole app.
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', onKeyDown)
-      document.body.style.overflow = previousOverflow
-    }
-  }, [onClose])
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useDialog(dialogRef, onClose)
 
   // Portalled to <body> because `position: fixed` resolves against the nearest transformed
   // ancestor, not the viewport — and every .card in this app carries `animate-fade-up`, whose
@@ -41,20 +31,16 @@ export default function Sheet({ title, onClose, children, footer }: SheetProps) 
         onClick={onClose}
       />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        tabIndex={-1}
         className="animate-slide-up fixed inset-x-0 bottom-0 z-40 flex max-h-[85vh] flex-col rounded-t-2xl border-t border-black/[0.06] bg-surface-light shadow-2xl dark:border-white/[0.07] dark:bg-surface-dark"
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-black/[0.06] px-5 py-4 dark:border-white/[0.07]">
+        <div className="flex shrink-0 items-center justify-between border-b border-black/[0.06] px-5 py-2.5 dark:border-white/[0.07]">
           <p className="text-lg font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">{title}</p>
-          <button
-            onClick={onClose}
-            aria-label="닫기"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-all duration-200 ease-spring hover:bg-black/[0.05] hover:text-slate-700 active:scale-90 dark:text-slate-500 dark:hover:bg-white/[0.08] dark:hover:text-slate-200"
-          >
-            ✕
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>

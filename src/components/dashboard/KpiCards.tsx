@@ -32,11 +32,9 @@ export default function KpiCards({
       value: savingsRate === null ? '—' : `${(savingsRate * 100).toFixed(1)}%`,
       color: 'text-slate-900 dark:text-white',
     },
-    {
-      label: '순현금흐름',
-      value: netCashFlow,
-      color: netCashFlow >= 0 ? 'text-income' : 'text-spending',
-    },
+    // Net figures are neither income nor savings, so they stay in neutral ink and carry an explicit
+    // sign — a positive balance painted income-blue read as "more income".
+    { label: '순현금흐름', value: netCashFlow, color: 'text-slate-900 dark:text-white', signed: true },
   ]
 
   return (
@@ -58,8 +56,10 @@ export default function KpiCards({
             <p className="mb-3 text-[13px] font-medium tracking-[-0.005em] text-slate-500 dark:text-slate-400">
               {card.label}
             </p>
-            <p className={`text-[20px] font-semibold leading-none tracking-[-0.02em] md:text-[26px] ${card.color}`}>
-              {typeof card.value === 'number' ? fmt(card.value) : card.value}
+            <p className={`text-[20px] font-semibold leading-none tracking-[-0.02em] tabular-nums md:text-[26px] ${card.color}`}>
+              {typeof card.value === 'number'
+                ? `${'signed' in card && card.value > 0 ? '+' : ''}${fmt(card.value)}`
+                : card.value}
             </p>
           </div>
         ))}

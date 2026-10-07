@@ -48,7 +48,7 @@ export default function EntriesToolbar({
               key={s}
               onClick={() => onSectionChange(s)}
               aria-pressed={section === s}
-              className={`btn-ghost ${section === s ? 'btn-ghost-active' : ''}`}
+              className={`btn-ghost min-h-11 md:min-h-0 ${section === s ? 'btn-ghost-active' : ''}`}
             >
               {ENTRY_SECTION_LABELS[s]}
             </button>
@@ -113,7 +113,7 @@ export default function EntriesToolbar({
         <button
           onClick={onToggleShowExcluded}
           aria-pressed={showExcluded}
-          className={`w-full rounded-lg border px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-spring active:scale-[0.97] md:w-auto ${
+          className={`min-h-11 w-full rounded-lg border px-3 py-1.5 text-sm font-medium md:min-h-0 transition-all duration-200 ease-spring active:scale-[0.97] md:w-auto ${
             showExcluded
               ? 'border-accent/40 bg-accent/10 text-accent dark:border-accent-light/40 dark:bg-accent-light/10 dark:text-accent-light'
               : 'border-black/[0.08] text-slate-500 hover:bg-black/[0.03] dark:border-white/[0.1] dark:text-slate-400 dark:hover:bg-white/[0.05]'

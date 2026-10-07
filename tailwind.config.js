@@ -11,12 +11,15 @@ export default {
         income: '#2563eb',
         spending: '#e11d48',
         saving: '#059669',
-        // Single accent used for UI chrome (nav, buttons, focus, icon) — kept distinct from the
-        // income/spending/saving colors above, which carry financial meaning, not brand identity.
+        // Single accent used for UI chrome (nav, buttons, focus). Warm amber taken from the coin
+        // app icon, and deliberately a different hue from income/spending/saving above: those
+        // carry financial meaning, so "tappable" must never look like "income" (the old Apple-blue
+        // accent was nearly the same color as income). DEFAULT clears 4.5:1 on white; `light` is
+        // the dark-mode variant and needs dark text when used as a fill.
         accent: {
-          DEFAULT: '#0071e3',
-          light: '#0a84ff',
-          dark: '#0058b0',
+          DEFAULT: '#b45309',
+          light: '#fbbf24',
+          dark: '#92400e',
         },
         // Page background vs. the raised card surface sitting on it. Two steps, not one, so cards
         // read as lifted panes in both modes instead of blending into the page.

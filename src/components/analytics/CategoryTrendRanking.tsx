@@ -35,7 +35,7 @@ export default function CategoryTrendRanking({ transactions, month }: CategoryTr
           )}
         </div>
         <div>
-          <p className="mb-2 text-xs font-medium text-income">감소</p>
+          <p className="mb-2 text-xs font-medium text-saving">감소</p>
           {decreases.length === 0 ? (
             <p className="text-sm text-slate-400 dark:text-slate-500">감소한 카테고리가 없어요.</p>
           ) : (
@@ -43,7 +43,7 @@ export default function CategoryTrendRanking({ transactions, month }: CategoryTr
               {decreases.map((t) => (
                 <li key={t.category} className="flex items-center justify-between text-sm">
                   <span className="text-slate-700 dark:text-slate-200">{t.category}</span>
-                  <span className="text-income">{formatKRW(t.changeAmount)}</span>
+                  <span className="text-saving">{formatKRW(t.changeAmount)}</span>
                 </li>
               ))}
             </ul>

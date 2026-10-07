@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { dailySummaries, spendingIntensity, weeklySpendingBands } from '../../lib/monthDetailAggregations'
 import { formatKRW } from '../../lib/format'
+import { formatDayLabel } from '../../lib/month'
 import type { Transaction } from '../../types/transaction'
 
 interface CalendarGridProps {
@@ -69,16 +70,30 @@ export default function CalendarGrid({ transactions, month, onDayClick }: Calend
                 Array.from({ length: firstDayOffset }).map((_, i) => <div key={`empty-${i}`} />)}
               {bandDays.map((day) => {
                 const intensity = spendingIntensity(day.spending, maxSpending)
+                // The cell shows only the date on phones, so the accessible name carries the figures.
+                const label = [
+                  formatDayLabel(day.date),
+                  day.spending > 0 ? `지출 ${formatKRW(day.spending)}` : '지출 없음',
+                  day.income > 0 ? `수입 ${formatKRW(day.income)}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(', ')
                 return (
                   <button
                     key={day.date}
                     onClick={() => onDayClick(day.date)}
+                    aria-label={label}
                     // Amounts do not fit a ~44px cell, so on phones the cell carries only the date
                     // and its spending tint; the figures live in the day detail sheet a tap away.
                     className="min-h-[44px] rounded-lg p-1.5 text-center text-xs tabular-nums transition-all duration-200 ease-spring hover:scale-[1.04] hover:ring-2 hover:ring-accent/40 md:min-h-0 md:p-2 md:text-left"
                     style={{ backgroundColor: intensity > 0 ? `rgba(225, 29, 72, ${intensity})` : 'transparent' }}
                   >
-                    <div className="font-medium text-slate-700 dark:text-slate-200">{Number(day.date.slice(-2))}</div>
+                    {/* Darkest ink on tinted cells keeps the date legible against the heaviest red. */}
+                    <div
+                      className={`font-medium ${intensity > 0 ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200'}`}
+                    >
+                      {Number(day.date.slice(-2))}
+                    </div>
                     {day.income > 0 && <div className="hidden text-income md:block">+{formatKRW(day.income)}</div>}
                     {day.spending > 0 && <div className="hidden text-spending md:block">-{formatKRW(day.spending)}</div>}
                   </button>

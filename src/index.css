@@ -24,6 +24,24 @@
     color-scheme: dark;
   }
 
+  /* One visible focus ring for every keyboard-reachable control. Mouse and touch clicks don't
+     trigger :focus-visible, so pointer users never see it. Form fields keep their own ring. */
+  :focus-visible {
+    outline: 2px solid theme('colors.accent.DEFAULT');
+    outline-offset: 2px;
+  }
+  :root.dark :focus-visible {
+    outline-color: theme('colors.accent.light');
+  }
+  .field:focus-visible,
+  [role='dialog']:focus-visible {
+    outline: none;
+  }
+
+  ::selection {
+    background-color: rgb(251 191 36 / 0.35);
+  }
+
   /* The open dropdown list is drawn by the browser, not the select, and it ignores the select's
      translucent background (`.field` uses bg-white/[0.04] in dark mode) — falling back to a white
      panel while the option text still inherits the light dark-mode color, which made every item
@@ -87,10 +105,10 @@
   .btn-primary {
     @apply rounded-full bg-accent px-5 py-2 text-sm font-medium text-white
       transition-all duration-200 ease-spring
-      hover:bg-accent-dark hover:shadow-[0_4px_16px_-4px_rgba(0,113,227,0.5)]
+      hover:bg-accent-dark hover:shadow-[0_4px_16px_-4px_rgba(180,83,9,0.45)]
       active:scale-[0.97]
       disabled:pointer-events-none disabled:opacity-40
-      dark:bg-accent-light dark:hover:bg-accent;
+      dark:bg-accent-light dark:text-amber-950 dark:hover:bg-amber-300;
   }
 
   /* Neutral pill used for segmented controls and secondary actions. */
@@ -113,8 +131,10 @@
     @apply inline-flex items-center gap-1 rounded-full bg-black/[0.04] p-1 dark:bg-white/[0.06];
   }
 
+  /* 44px tall on phones (thumb target), compact on desktop where the entries table packs a field
+     into every cell. */
   .field {
-    @apply rounded-lg border border-black/[0.08] bg-white/60 px-3 py-1.5 text-sm text-slate-900
+    @apply min-h-11 rounded-lg border border-black/[0.08] bg-white/60 px-3 py-1.5 text-sm text-slate-900 md:min-h-0
       transition-colors duration-200
       focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30
       dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-slate-100

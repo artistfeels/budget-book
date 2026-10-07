@@ -1,4 +1,9 @@
+import { useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { formatKRW } from '../../lib/format'
+import { formatDayLabel } from '../../lib/month'
+import { useDialog } from '../../lib/useDialog'
+import CloseButton from '../CloseButton'
 import { resolvedFlowType } from '../../lib/aggregations'
 import type { Transaction } from '../../types/transaction'
 
@@ -16,8 +21,13 @@ const AMOUNT_COLOR_BY_FLOW: Record<ReturnType<typeof resolvedFlowType>, string> 
 
 export default function DayTransactionPanel({ date, transactions, onClose }: DayTransactionPanelProps) {
   const dayTransactions = transactions.filter((t) => t.date === date).sort((a, b) => a.time.localeCompare(b.time))
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useDialog(dialogRef, onClose)
+  const title = formatDayLabel(date)
 
-  return (
+  // Portalled for the same reason as Sheet: an animated ancestor's transform would otherwise
+  // become the containing block for `position: fixed`.
+  return createPortal(
     <>
       {/* Click-anywhere-to-dismiss scrim. Also dims the page so the panel reads as a layer above
           it rather than a column welded to the edge. */}
@@ -28,21 +38,20 @@ export default function DayTransactionPanel({ date, transactions, onClose }: Day
       />
       {/* Bottom sheet on phones, right-edge drawer from md up. */}
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${title} 거래`}
+        tabIndex={-1}
         className="animate-slide-up fixed inset-x-0 bottom-0 z-30 max-h-[85vh] overflow-y-auto rounded-t-2xl border-t border-black/[0.06] bg-surface-light p-6 shadow-2xl md:inset-y-0 md:left-auto md:right-0 md:max-h-none md:w-full md:max-w-sm md:animate-slide-in-right md:rounded-none md:border-l md:border-t-0 dark:border-white/[0.07] dark:bg-surface-dark"
         style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
       >
-        <div className="mb-5 flex items-center justify-between">
-          <p className="text-xl font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">{date}</p>
-          <button
-            onClick={onClose}
-            aria-label="닫기"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-all duration-200 ease-spring hover:bg-black/[0.05] hover:text-slate-700 active:scale-90 dark:text-slate-500 dark:hover:bg-white/[0.08] dark:hover:text-slate-200"
-          >
-            ✕
-          </button>
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-xl font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">{title}</p>
+          <CloseButton onClick={onClose} />
         </div>
         {dayTransactions.length === 0 ? (
-          <p className="text-sm text-slate-400 dark:text-slate-500">이 날짜에는 거래가 없습니다.</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">이날은 거래가 없어요.</p>
         ) : (
           <ul className="space-y-2.5">
             {dayTransactions.map((t) => (
@@ -64,6 +73,7 @@ export default function DayTransactionPanel({ date, transactions, onClose }: Day
           </ul>
         )}
       </div>
-    </>
+    </>,
+    document.body
   )
 }

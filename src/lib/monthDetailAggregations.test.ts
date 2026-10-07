@@ -361,15 +361,15 @@ describe('spendingIntensity', () => {
     expect(spendingIntensity(1000, 0)).toBe(0)
   })
 
-  it('최댓값인 날은 상한 0.6을 받는다', () => {
-    expect(spendingIntensity(50000, 50000)).toBeCloseTo(0.6)
+  it('최댓값인 날은 상한 0.45를 받는다 — 날짜 글자 대비 4.5:1 유지', () => {
+    expect(spendingIntensity(50000, 50000)).toBeCloseTo(0.45)
   })
 
   it('지출이 있는 날은 최소 0.1의 바닥값을 받아 배경이 보인다', () => {
     expect(spendingIntensity(1, 1_000_000)).toBeGreaterThanOrEqual(0.1)
   })
 
-  it('최댓값의 절반은 0.1 + 0.25 = 0.35다', () => {
-    expect(spendingIntensity(25000, 50000)).toBeCloseTo(0.35)
+  it('최댓값의 절반은 0.1 + 0.175 = 0.275다', () => {
+    expect(spendingIntensity(25000, 50000)).toBeCloseTo(0.275)
   })
 })
